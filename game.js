@@ -26,7 +26,10 @@ let gameState = {
     peer: null,
     connection: null,
     opponentScore: 0,
-    gameSeed: null
+    gameSeed: null,
+    // Additional intervals
+    availabilityInterval: null,
+    priceInterval: null
 };
 
 // Seat price tiers
@@ -335,8 +338,8 @@ function startGame() {
     gameState.timerInterval = setInterval(updateTimer, 1000);
 
     // Start dynamic seat updates
-    setInterval(updateSeatAvailability, 2000); // Every 2 seconds
-    setInterval(updateSeatPrices, 3000); // Every 3 seconds
+    gameState.availabilityInterval = setInterval(updateSeatAvailability, 2000); // Every 2 seconds
+    gameState.priceInterval = setInterval(updateSeatPrices, 3000); // Every 3 seconds
 }
 
 // Update game timer
@@ -568,6 +571,8 @@ function completeCheckout() {
 function endGame() {
     gameState.isRunning = false;
     clearInterval(gameState.timerInterval);
+    clearInterval(gameState.availabilityInterval);
+    clearInterval(gameState.priceInterval);
 
     // Notify opponent in multiplayer
     if (gameState.isMultiplayer) {
