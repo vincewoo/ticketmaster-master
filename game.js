@@ -19,7 +19,14 @@ let gameState = {
     totalSaved: 0,
     ticketsPurchased: 0,
     targetTicketCount: 0,
-    skipsCount: 0
+    skipsCount: 0,
+    // Multiplayer state
+    isMultiplayer: false,
+    isHost: false,
+    peer: null,
+    connection: null,
+    opponentScore: 0,
+    gameSeed: null
 };
 
 // Seat price tiers
@@ -39,7 +46,7 @@ function initGame() {
 
 // Generate random target ticket count
 function generateTargetTicketCount() {
-    return Math.floor(Math.random() * 6) + 1; // 1-6 tickets
+    return Math.floor(getRandomValue() * 6) + 1; // 1-6 tickets
 }
 
 // Check if seats in cart are adjacent (same row, consecutive seats)
@@ -87,9 +94,10 @@ function generateSeats() {
                 col: col,
                 basePrice: calculateSeatPrice(row, col),
                 currentPrice: 0,
-                isAvailable: Math.random() > 0.3, // 70% initially available
+                isAvailable: getRandomValue() > 0.3, // 70% initially available
                 inCart: false,
-                isPurchased: false // Track if seat has been bought
+                isPurchased: false, // Track if seat has been bought
+                ownedByOpponent: false // Track if opponent bought this seat
             };
             seat.currentPrice = seat.basePrice;
             gameState.seats.push(seat);
@@ -119,7 +127,7 @@ function calculateSeatPrice(row, col) {
     const basePrice = minPrice + (combinedFactor * (maxPrice - minPrice));
 
     // Add some randomness (±10%) to make it less predictable
-    const randomFactor = 0.9 + (Math.random() * 0.2);
+    const randomFactor = 0.9 + (getRandomValue() * 0.2);
 
     return Math.floor(basePrice * randomFactor);
 }
@@ -142,6 +150,8 @@ function renderSeats() {
 
         if (seat.inCart) {
             seatElement.classList.add('in-cart');
+        } else if (seat.ownedByOpponent) {
+            seatElement.classList.add('opponent-seat');
         } else if (seat.isAvailable) {
             seatElement.classList.add('available');
         } else {
@@ -290,6 +300,9 @@ function updateCart() {
 // Start game
 function startGame() {
     hideModal('start-modal');
+    hideModal('host-modal');
+    hideModal('join-modal');
+
     gameState.isRunning = true;
     gameState.timeRemaining = GAME_DURATION;
     gameState.score = 0;
@@ -298,6 +311,20 @@ function startGame() {
     gameState.ticketsPurchased = 0;
     gameState.targetTicketCount = generateTargetTicketCount();
     gameState.skipsCount = 0;
+    gameState.opponentScore = 0;
+
+    // Initialize seeded random for multiplayer
+    if (gameState.isMultiplayer && gameState.gameSeed) {
+        seededRandom = new SeededRandom(gameState.gameSeed);
+    }
+
+    // Show/hide opponent score display
+    const opponentScoreDisplay = document.getElementById('opponent-score-display');
+    if (gameState.isMultiplayer) {
+        opponentScoreDisplay.classList.remove('hidden');
+    } else {
+        opponentScoreDisplay.classList.add('hidden');
+    }
 
     generateSeats();
     renderSeats();
@@ -327,6 +354,7 @@ function updateDisplay() {
     const timerEl = document.getElementById('timer');
     const scoreEl = document.getElementById('score');
     const targetEl = document.getElementById('target-tickets');
+    const opponentScoreEl = document.getElementById('opponent-score');
 
     const minutes = Math.floor(gameState.timeRemaining / 60);
     const seconds = gameState.timeRemaining % 60;
@@ -334,6 +362,11 @@ function updateDisplay() {
 
     scoreEl.textContent = Math.floor(gameState.score);
     targetEl.textContent = gameState.targetTicketCount;
+
+    // Update opponent score in multiplayer
+    if (gameState.isMultiplayer) {
+        opponentScoreEl.textContent = Math.floor(gameState.opponentScore);
+    }
 }
 
 // Update seat availability randomly
@@ -341,12 +374,12 @@ function updateSeatAvailability() {
     if (!gameState.isRunning) return;
 
     // Randomly change availability of 2-4 seats
-    const numChanges = Math.floor(Math.random() * 3) + 2;
+    const numChanges = Math.floor(getRandomValue() * 3) + 2;
 
     for (let i = 0; i < numChanges; i++) {
-        const randomSeat = gameState.seats[Math.floor(Math.random() * gameState.seats.length)];
-        // Only toggle if not in cart and not already purchased
-        if (!randomSeat.inCart && !randomSeat.isPurchased) {
+        const randomSeat = gameState.seats[Math.floor(getRandomValue() * gameState.seats.length)];
+        // Only toggle if not in cart, not already purchased, and not owned by opponent
+        if (!randomSeat.inCart && !randomSeat.isPurchased && !randomSeat.ownedByOpponent) {
             randomSeat.isAvailable = !randomSeat.isAvailable;
         }
     }
@@ -359,9 +392,9 @@ function updateSeatPrices() {
     if (!gameState.isRunning) return;
 
     gameState.seats.forEach(seat => {
-        if (!seat.inCart && seat.isAvailable && !seat.isPurchased) {
+        if (!seat.inCart && seat.isAvailable && !seat.isPurchased && !seat.ownedByOpponent) {
             // Fluctuate price by -30% to +30% of base price
-            const fluctuation = (Math.random() - 0.5) * 0.6;
+            const fluctuation = (getRandomValue() - 0.5) * 0.6;
             seat.currentPrice = Math.floor(seat.basePrice * (1 + fluctuation));
             // Ensure minimum price of $20
             seat.currentPrice = Math.max(20, seat.currentPrice);
@@ -376,7 +409,7 @@ function initiateCheckout() {
     if (gameState.cart.length === 0) return;
 
     // 60% chance of CAPTCHA
-    if (Math.random() < 0.6) {
+    if (getRandomValue() < 0.6) {
         showCaptcha();
     } else {
         completeCheckout();
@@ -501,8 +534,24 @@ function completeCheckout() {
             seat.isAvailable = false;
             seat.inCart = false;
             seat.isPurchased = true; // Mark as permanently purchased
+
+            // Notify opponent in multiplayer
+            if (gameState.isMultiplayer) {
+                sendMultiplayerMessage({
+                    type: 'seatClaimed',
+                    seatId: seat.id
+                });
+            }
         }
     });
+
+    // Send score update in multiplayer
+    if (gameState.isMultiplayer) {
+        sendMultiplayerMessage({
+            type: 'scoreUpdate',
+            score: gameState.score
+        });
+    }
 
     // Clear cart
     gameState.cart = [];
@@ -520,8 +569,29 @@ function endGame() {
     gameState.isRunning = false;
     clearInterval(gameState.timerInterval);
 
+    // Notify opponent in multiplayer
+    if (gameState.isMultiplayer) {
+        sendMultiplayerMessage({
+            type: 'gameEnd'
+        });
+    }
+
     // Show final stats
-    document.getElementById('final-score').textContent = Math.floor(gameState.score);
+    let finalScoreText = Math.floor(gameState.score);
+    if (gameState.isMultiplayer) {
+        const playerScore = Math.floor(gameState.score);
+        const opponentScore = Math.floor(gameState.opponentScore);
+
+        if (playerScore > opponentScore) {
+            finalScoreText = `${playerScore} - You Win! 🎉`;
+        } else if (playerScore < opponentScore) {
+            finalScoreText = `${playerScore} - You Lose`;
+        } else {
+            finalScoreText = `${playerScore} - Tie!`;
+        }
+    }
+
+    document.getElementById('final-score').textContent = finalScoreText;
     document.getElementById('tickets-bought').textContent = gameState.ticketsPurchased;
     document.getElementById('total-saved').textContent = `$${gameState.totalSaved.toFixed(2)}`;
     document.getElementById('skips-count').textContent = gameState.skipsCount;
@@ -567,10 +637,238 @@ function hideModal(modalId) {
     document.getElementById(modalId).classList.add('hidden');
 }
 
+// ======================
+// MULTIPLAYER FUNCTIONS
+// ======================
+
+// Initialize multiplayer mode selection
+function initMultiplayer() {
+    document.getElementById('single-player-btn').addEventListener('click', () => {
+        gameState.isMultiplayer = false;
+        startGame();
+    });
+
+    document.getElementById('multiplayer-btn').addEventListener('click', () => {
+        hideModal('start-modal');
+        showModal('multiplayer-modal');
+    });
+
+    document.getElementById('back-to-start-btn').addEventListener('click', () => {
+        hideModal('multiplayer-modal');
+        showModal('start-modal');
+    });
+
+    document.getElementById('host-game-btn').addEventListener('click', hostGame);
+    document.getElementById('join-game-btn').addEventListener('click', () => {
+        hideModal('multiplayer-modal');
+        showModal('join-modal');
+    });
+
+    document.getElementById('cancel-host-btn').addEventListener('click', cancelHost);
+    document.getElementById('cancel-join-btn').addEventListener('click', cancelJoin);
+    document.getElementById('connect-btn').addEventListener('click', joinGame);
+    document.getElementById('copy-code-btn').addEventListener('click', copyGameCode);
+}
+
+// Host a new game
+function hostGame() {
+    hideModal('multiplayer-modal');
+    showModal('host-modal');
+
+    gameState.isMultiplayer = true;
+    gameState.isHost = true;
+    gameState.gameSeed = Date.now(); // Create seed for deterministic randomness
+
+    // Create peer with PeerJS
+    gameState.peer = new Peer();
+
+    gameState.peer.on('open', (id) => {
+        document.getElementById('game-code').value = id;
+        document.getElementById('host-status').textContent = 'Waiting for player to join...';
+    });
+
+    gameState.peer.on('connection', (conn) => {
+        gameState.connection = conn;
+        setupConnection(conn);
+        document.getElementById('host-status').textContent = 'Player connected! Starting game...';
+
+        // Send game seed to guest
+        conn.send({
+            type: 'init',
+            gameSeed: gameState.gameSeed
+        });
+
+        setTimeout(() => {
+            hideModal('host-modal');
+            startGame();
+        }, 1500);
+    });
+
+    gameState.peer.on('error', (err) => {
+        console.error('Peer error:', err);
+        document.getElementById('host-status').textContent = 'Connection error. Please try again.';
+    });
+}
+
+// Join an existing game
+function joinGame() {
+    const code = document.getElementById('join-code-input').value.trim();
+
+    if (!code) {
+        document.getElementById('join-status').textContent = 'Please enter a game code.';
+        return;
+    }
+
+    gameState.isMultiplayer = true;
+    gameState.isHost = false;
+
+    document.getElementById('join-status').textContent = 'Connecting...';
+
+    // Create peer
+    gameState.peer = new Peer();
+
+    gameState.peer.on('open', () => {
+        // Connect to host
+        const conn = gameState.peer.connect(code);
+        gameState.connection = conn;
+        setupConnection(conn);
+
+        conn.on('open', () => {
+            document.getElementById('join-status').textContent = 'Connected! Waiting for host...';
+        });
+    });
+
+    gameState.peer.on('error', (err) => {
+        console.error('Peer error:', err);
+        document.getElementById('join-status').textContent = 'Failed to connect. Check the code and try again.';
+    });
+}
+
+// Setup connection event handlers
+function setupConnection(conn) {
+    conn.on('data', (data) => {
+        handleMultiplayerMessage(data);
+    });
+
+    conn.on('close', () => {
+        console.log('Connection closed');
+        if (gameState.isRunning) {
+            alert('Opponent disconnected!');
+            endGame();
+        }
+    });
+}
+
+// Handle incoming multiplayer messages
+function handleMultiplayerMessage(data) {
+    switch (data.type) {
+        case 'init':
+            // Guest receives game seed from host
+            gameState.gameSeed = data.gameSeed;
+            hideModal('join-modal');
+            startGame();
+            break;
+
+        case 'seatClaimed':
+            // Mark seat as taken by opponent
+            const seat = gameState.seats.find(s => s.id === data.seatId);
+            if (seat) {
+                seat.isAvailable = false;
+                seat.isPurchased = true;
+                seat.ownedByOpponent = true;
+            }
+            renderSeats();
+            break;
+
+        case 'scoreUpdate':
+            // Update opponent's score
+            gameState.opponentScore = data.score;
+            updateDisplay();
+            break;
+
+        case 'gameEnd':
+            // Opponent finished
+            if (gameState.isRunning) {
+                endGame();
+            }
+            break;
+    }
+}
+
+// Send multiplayer message
+function sendMultiplayerMessage(data) {
+    if (gameState.isMultiplayer && gameState.connection && gameState.connection.open) {
+        gameState.connection.send(data);
+    }
+}
+
+// Copy game code to clipboard
+function copyGameCode() {
+    const codeInput = document.getElementById('game-code');
+    codeInput.select();
+    document.execCommand('copy');
+
+    const btn = document.getElementById('copy-code-btn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => {
+        btn.textContent = originalText;
+    }, 2000);
+}
+
+// Cancel hosting
+function cancelHost() {
+    if (gameState.peer) {
+        gameState.peer.destroy();
+        gameState.peer = null;
+    }
+    gameState.isMultiplayer = false;
+    gameState.isHost = false;
+    hideModal('host-modal');
+    showModal('multiplayer-modal');
+}
+
+// Cancel joining
+function cancelJoin() {
+    if (gameState.peer) {
+        gameState.peer.destroy();
+        gameState.peer = null;
+    }
+    gameState.isMultiplayer = false;
+    hideModal('join-modal');
+    showModal('multiplayer-modal');
+}
+
+// Seeded random number generator for deterministic randomness
+class SeededRandom {
+    constructor(seed) {
+        this.seed = seed;
+    }
+
+    next() {
+        this.seed = (this.seed * 9301 + 49297) % 233280;
+        return this.seed / 233280;
+    }
+}
+
+let seededRandom = null;
+
+// Get random value (uses seed in multiplayer, Math.random in single player)
+function getRandomValue() {
+    if (gameState.isMultiplayer && seededRandom) {
+        return seededRandom.next();
+    }
+    return Math.random();
+}
+
+// ======================
+// END MULTIPLAYER
+// ======================
+
 // Setup event listeners
 function setupEventListeners() {
-    // Start button
-    document.getElementById('start-btn').addEventListener('click', startGame);
+    // Multiplayer setup
+    initMultiplayer();
 
     // Checkout button
     document.getElementById('checkout-btn').addEventListener('click', initiateCheckout);

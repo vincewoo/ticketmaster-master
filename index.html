@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ticketmaster Master - Beat the Rush!</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
 </head>
 <body>
     <div id="game-container">
@@ -24,8 +25,12 @@
                     <span id="timer" class="timer">2:00</span>
                 </div>
                 <div class="score-display">
-                    <span class="label">Score:</span>
+                    <span class="label">Your Score:</span>
                     <span id="score" class="score">0</span>
+                </div>
+                <div class="opponent-score-display hidden" id="opponent-score-display">
+                    <span class="label">Opponent:</span>
+                    <span id="opponent-score" class="score">0</span>
                 </div>
             </div>
         </header>
@@ -120,7 +125,51 @@
                     <p><strong>Objective:</strong> Purchase tickets and maximize your savings</p>
                     <p><strong>Challenge:</strong> Prices fluctuate and seats disappear fast!</p>
                 </div>
-                <button id="start-btn" class="btn-primary btn-large">Start Game</button>
+                <div class="mode-selection">
+                    <button id="single-player-btn" class="btn-primary btn-large">Single Player</button>
+                    <button id="multiplayer-btn" class="btn-secondary btn-large">Multiplayer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multiplayer Setup Modal -->
+        <div id="multiplayer-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Multiplayer Mode</h2>
+                <p>Compete with a friend for the best deals!</p>
+                <div class="multiplayer-options">
+                    <button id="host-game-btn" class="btn-primary btn-large">Host Game</button>
+                    <button id="join-game-btn" class="btn-secondary btn-large">Join Game</button>
+                </div>
+                <button id="back-to-start-btn" class="btn-secondary">Back</button>
+            </div>
+        </div>
+
+        <!-- Host Game Modal -->
+        <div id="host-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Host Game</h2>
+                <p>Share this code with your friend:</p>
+                <div class="game-code-display">
+                    <input type="text" id="game-code" class="game-code-input" readonly>
+                    <button id="copy-code-btn" class="btn-secondary">Copy</button>
+                </div>
+                <p class="connection-status" id="host-status">Waiting for player to join...</p>
+                <button id="cancel-host-btn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Join Game Modal -->
+        <div id="join-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Join Game</h2>
+                <p>Enter the game code from your friend:</p>
+                <input type="text" id="join-code-input" class="game-code-input" placeholder="Enter code">
+                <p class="connection-status" id="join-status"></p>
+                <div class="modal-buttons">
+                    <button id="connect-btn" class="btn-primary">Connect</button>
+                    <button id="cancel-join-btn" class="btn-secondary">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
