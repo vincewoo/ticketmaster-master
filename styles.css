@@ -129,7 +129,7 @@ body {
 }
 
 .seat.available {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
     color: white;
 }
 
@@ -148,6 +148,10 @@ body {
 .seat-price {
     font-size: 1em;
     font-weight: bold;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
 }
 
 .seat-label {
@@ -361,6 +365,27 @@ body {
 }
 
 /* CAPTCHA */
+.captcha-warning {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    color: #856404;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 15px;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
 .captcha-timer {
     text-align: center;
     font-size: 1.2em;
@@ -448,6 +473,12 @@ body {
 }
 
 /* Game Over */
+.gameover-content {
+    max-width: 700px !important;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
 .final-stats {
     background: #f8f9fa;
     padding: 20px;
@@ -466,6 +497,127 @@ body {
     color: #667eea;
     font-weight: bold;
     font-size: 1.5em;
+}
+
+.purchase-history-section {
+    margin-bottom: 20px;
+}
+
+.purchase-history-section h3 {
+    color: #1e3c72;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.purchase-history {
+    max-height: 400px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.purchase-group {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.purchase-group-header {
+    font-weight: bold;
+    color: #1e3c72;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.purchase-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin: 5px 0;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.95em;
+}
+
+.seat-id {
+    font-weight: 600;
+    color: #333;
+    min-width: 50px;
+}
+
+.seat-prices {
+    display: flex;
+    gap: 15px;
+    flex: 1;
+    justify-content: center;
+}
+
+.face-value {
+    color: #666;
+}
+
+.paid-price {
+    color: #333;
+    font-weight: 600;
+}
+
+.seat-discount {
+    font-weight: bold;
+    min-width: 100px;
+    text-align: right;
+}
+
+.seat-discount.discount {
+    color: #15803d;
+}
+
+.seat-discount.premium {
+    color: #dc2626;
+}
+
+.purchase-summary {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 8px;
+    font-size: 0.95em;
+}
+
+.summary-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.summary-value {
+    font-weight: bold;
+    color: #333;
+}
+
+.summary-savings {
+    margin-top: 6px;
+    padding: 8px;
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.summary-savings.discount .summary-label,
+.summary-savings.discount .summary-value {
+    color: #15803d;
+}
+
+.summary-savings.premium .summary-label,
+.summary-savings.premium .summary-value {
+    color: #dc2626;
 }
 
 /* Start screen */

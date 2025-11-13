@@ -62,7 +62,7 @@
                         <span id="cart-total">$0.00</span>
                     </div>
                     <button id="checkout-btn" class="checkout-btn" disabled>Checkout</button>
-                    <button id="skip-btn" class="skip-btn">Skip Target (-$50)</button>
+                    <button id="skip-btn" class="skip-btn">Skip Target (-50 pts)</button>
                 </div>
 
                 <div class="game-info">
@@ -70,7 +70,7 @@
                     <ul>
                         <li>Match the target ticket count shown at top</li>
                         <li>Seats must be adjacent in the same row</li>
-                        <li>Can't find seats? Skip target for -$50 penalty</li>
+                        <li>Can't find seats? Skip target for -50 pts penalty</li>
                         <li>Prices change constantly - grab deals fast!</li>
                         <li>Seats randomly become available/unavailable</li>
                         <li>Complete CAPTCHA challenges to checkout</li>
@@ -85,6 +85,9 @@
             <div class="modal-content">
                 <h2>Security Verification</h2>
                 <p>Prove you're human to continue!</p>
+                <div id="captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
                 <div class="captcha-timer">
                     Time: <span id="captcha-timer">10</span>s
                 </div>
@@ -102,14 +105,20 @@
 
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
-            <div class="modal-content">
+            <div class="modal-content gameover-content">
                 <h2>Game Over!</h2>
                 <div class="final-stats">
                     <p class="final-score">Final Score: <span id="final-score">0</span></p>
                     <p class="tickets-bought">Tickets Purchased: <span id="tickets-bought">0</span></p>
                     <p class="total-saved">Total Saved: <span id="total-saved">$0</span></p>
                     <p class="skips-count">Targets Skipped: <span id="skips-count">0</span></p>
-                    <p class="skip-penalty">Skip Penalty: <span id="skip-penalty-total">$0</span></p>
+                    <p class="skip-penalty">Skip Penalty: <span id="skip-penalty-total">0 pts</span></p>
+                </div>
+                <div class="purchase-history-section" id="purchase-history-section">
+                    <h3>Purchase History</h3>
+                    <div class="purchase-history" id="purchase-history">
+                        <!-- Purchase history will be generated here -->
+                    </div>
                 </div>
                 <button id="play-again-btn" class="btn-primary">Play Again</button>
             </div>
@@ -174,6 +183,6 @@
         </div>
     </div>
 
-    <script src="game.js?v=2"></script>
+    <script src="game.js?v=13"></script>
 </body>
 </html>

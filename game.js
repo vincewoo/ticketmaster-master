@@ -20,16 +20,19 @@ let gameState = {
     ticketsPurchased: 0,
     targetTicketCount: 0,
     skipsCount: 0,
+    purchaseHistory: [], // Track all purchases for end game review
+    // Price event state
+    saleEventActive: false,
+    surgeEventActive: false,
+    saleStartTime: null,
+    surgeStartTime: null,
     // Multiplayer state
     isMultiplayer: false,
     isHost: false,
     peer: null,
     connection: null,
     opponentScore: 0,
-    gameSeed: null,
-    // Additional intervals
-    availabilityInterval: null,
-    priceInterval: null
+    opponentCart: [] // Track opponent's cart for competition warning
 };
 
 // Seat price tiers
@@ -49,7 +52,38 @@ function initGame() {
 
 // Generate random target ticket count
 function generateTargetTicketCount() {
-    return Math.floor(getRandomValue() * 6) + 1; // 1-6 tickets
+    const target = Math.floor(Math.random() * 6) + 1; // 1-6 tickets
+
+    // In multiplayer, host broadcasts the target to guest
+    if (gameState.isMultiplayer && gameState.isHost) {
+        sendMultiplayerMessage({
+            type: 'targetUpdate',
+            targetTicketCount: target
+        });
+    }
+
+    return target;
+}
+
+// Generate random event times for sale and surge
+function generateEventTimes() {
+    // Events are 20 seconds long
+    const EVENT_DURATION = 20;
+
+    // Generate random start time for sale event (10-90 seconds into game)
+    // This ensures the event can complete before game ends
+    const saleStart = Math.floor(Math.random() * (GAME_DURATION - EVENT_DURATION - 30)) + 10;
+
+    // Generate random start time for surge event, ensuring no overlap with sale
+    let surgeStart;
+    do {
+        surgeStart = Math.floor(Math.random() * (GAME_DURATION - EVENT_DURATION - 30)) + 10;
+    } while (Math.abs(surgeStart - saleStart) < EVENT_DURATION + 5); // Ensure 5 second buffer between events
+
+    return {
+        saleStart: GAME_DURATION - saleStart, // Convert to countdown timer format
+        surgeStart: GAME_DURATION - surgeStart
+    };
 }
 
 // Check if seats in cart are adjacent (same row, consecutive seats)
@@ -86,18 +120,32 @@ function areSeatsAdjacent(cartItems) {
     return true;
 }
 
+// Check if there are overlapping seats with opponent
+function hasOverlappingSeats() {
+    if (!gameState.isMultiplayer) return false;
+
+    const mySeats = gameState.cart.map(item => item.seatId);
+    const opponentSeats = gameState.opponentCart;
+
+    // Check if any seats match
+    return mySeats.some(seatId => opponentSeats.includes(seatId));
+}
+
 // Generate seat data
 function generateSeats() {
     gameState.seats = [];
+    const initialAvailability = [];
+
     for (let row = 0; row < SEAT_ROWS; row++) {
         for (let col = 0; col < SEAT_COLS; col++) {
+            const isAvailable = Math.random() > 0.3; // 70% initially available
             const seat = {
                 id: `${String.fromCharCode(65 + row)}${col + 1}`,
                 row: row,
                 col: col,
                 basePrice: calculateSeatPrice(row, col),
                 currentPrice: 0,
-                isAvailable: getRandomValue() > 0.3, // 70% initially available
+                isAvailable: isAvailable,
                 inCart: false,
                 isPurchased: false, // Track if seat has been bought
                 ownedByOpponent: false, // Track if opponent bought this seat
@@ -105,7 +153,23 @@ function generateSeats() {
             };
             seat.currentPrice = seat.basePrice;
             gameState.seats.push(seat);
+
+            // Track initial availability for multiplayer sync
+            if (gameState.isMultiplayer && gameState.isHost) {
+                initialAvailability.push({
+                    seatId: seat.id,
+                    isAvailable: isAvailable
+                });
+            }
         }
+    }
+
+    // Host broadcasts initial seat availability to guest
+    if (gameState.isMultiplayer && gameState.isHost && initialAvailability.length > 0) {
+        sendMultiplayerMessage({
+            type: 'initialState',
+            seats: initialAvailability
+        });
     }
 }
 
@@ -125,21 +189,50 @@ function calculateSeatPrice(row, col) {
     const colWeight = 0.3; // 30% of price is determined by column position
     const combinedFactor = (rowFactor * rowWeight) + (colFactor * colWeight);
 
-    // Price range: $50 (worst seats) to $300 (best seats)
-    const minPrice = 50;
+    // Price range: $60 (worst seats) to $300 (best seats)
+    const minPrice = 60;
     const maxPrice = 300;
     const basePrice = minPrice + (combinedFactor * (maxPrice - minPrice));
 
     // Add some randomness (±10%) to make it less predictable
-    const randomFactor = 0.9 + (getRandomValue() * 0.2);
+    const randomFactor = 0.9 + (Math.random() * 0.2);
 
-    return Math.floor(basePrice * randomFactor);
+    // Round to nearest $20
+    return Math.round(basePrice * randomFactor / 20) * 20;
 }
 
 // Get random price based on tiers (DEPRECATED - kept for reference)
 function getRandomPrice() {
     const tier = PRICE_TIERS[Math.floor(Math.random() * PRICE_TIERS.length)];
     return Math.floor(Math.random() * (tier.range[1] - tier.range[0]) + tier.range[0]);
+}
+
+// Get price color based on deal quality
+function getPriceColor(currentPrice, basePrice) {
+    const discount = ((basePrice - currentPrice) / basePrice) * 100; // Positive means discount, negative means markup
+
+    if (discount >= 20) {
+        // Great deal (20%+ discount) - dark green
+        return '#0d6832';
+    } else if (discount >= 10) {
+        // Good deal (10-19% discount) - medium green
+        return '#15803d';
+    } else if (discount >= 5) {
+        // Okay deal (5-9% discount) - light green
+        return '#16a34a';
+    } else if (discount >= 0) {
+        // Slight deal (0-4% discount) - very light green
+        return '#22c55e';
+    } else if (discount >= -5) {
+        // Slight markup (0-5%) - light red
+        return '#ef4444';
+    } else if (discount >= -10) {
+        // Bad deal (5-10% markup) - medium red
+        return '#dc2626';
+    } else {
+        // Very bad deal (10%+ markup) - dark red
+        return '#b91c1c';
+    }
 }
 
 // Render seats on the board
@@ -176,6 +269,9 @@ function renderSeats() {
             const priceSpan = document.createElement('span');
             priceSpan.className = 'seat-price';
             priceSpan.textContent = `$${seat.currentPrice}`;
+
+            // Color code the price based on deal quality
+            priceSpan.style.color = getPriceColor(seat.currentPrice, seat.basePrice);
 
             const labelSpan = document.createElement('span');
             labelSpan.className = 'seat-label';
@@ -221,6 +317,14 @@ function handleSeatClick(seatId) {
         });
     }
 
+    // Send cart update to opponent in multiplayer
+    if (gameState.isMultiplayer) {
+        sendMultiplayerMessage({
+            type: 'cartUpdate',
+            cart: gameState.cart.map(item => item.seatId)
+        });
+    }
+
     renderSeats();
     updateCart();
 }
@@ -233,6 +337,14 @@ function removeSeatFromCart(seatId) {
     }
 
     gameState.cart = gameState.cart.filter(item => item.seatId !== seatId);
+
+    // Send cart update to opponent in multiplayer
+    if (gameState.isMultiplayer) {
+        sendMultiplayerMessage({
+            type: 'cartUpdate',
+            cart: gameState.cart.map(item => item.seatId)
+        });
+    }
 
     renderSeats();
     updateCart();
@@ -323,13 +435,28 @@ function startGame() {
     gameState.cart = [];
     gameState.totalSaved = 0;
     gameState.ticketsPurchased = 0;
-    gameState.targetTicketCount = generateTargetTicketCount();
     gameState.skipsCount = 0;
+    gameState.purchaseHistory = [];
     gameState.opponentScore = 0;
+    gameState.opponentCart = [];
+    gameState.targetTicketCount = generateTargetTicketCount();
 
-    // Initialize seeded random for multiplayer
-    if (gameState.isMultiplayer && gameState.gameSeed) {
-        seededRandom = new SeededRandom(gameState.gameSeed);
+    // Generate random event times (host only in multiplayer)
+    if (!gameState.isMultiplayer || gameState.isHost) {
+        const eventTimes = generateEventTimes();
+        gameState.saleStartTime = eventTimes.saleStart;
+        gameState.surgeStartTime = eventTimes.surgeStart;
+        gameState.saleEventActive = false;
+        gameState.surgeEventActive = false;
+
+        // In multiplayer, host broadcasts event times to guest
+        if (gameState.isMultiplayer && gameState.isHost) {
+            sendMultiplayerMessage({
+                type: 'eventTimes',
+                saleStartTime: gameState.saleStartTime,
+                surgeStartTime: gameState.surgeStartTime
+            });
+        }
     }
 
     // Show/hide opponent score display
@@ -352,6 +479,26 @@ function startGame() {
 // Update game timer
 function updateTimer() {
     gameState.timeRemaining--;
+
+    // Check for price event activations (20 seconds each)
+    // Sale event (all discounts)
+    if (gameState.timeRemaining === gameState.saleStartTime) {
+        gameState.saleEventActive = true;
+        updateEventDisplay();
+    } else if (gameState.saleEventActive && gameState.timeRemaining === gameState.saleStartTime - 20) {
+        gameState.saleEventActive = false;
+        updateEventDisplay();
+    }
+
+    // Surge event (all premiums)
+    if (gameState.timeRemaining === gameState.surgeStartTime) {
+        gameState.surgeEventActive = true;
+        updateEventDisplay();
+    } else if (gameState.surgeEventActive && gameState.timeRemaining === gameState.surgeStartTime - 20) {
+        gameState.surgeEventActive = false;
+        updateEventDisplay();
+    }
+
     updateDisplay();
 
     // Update seat availability every 2 seconds (on even seconds)
@@ -389,19 +536,70 @@ function updateDisplay() {
     }
 }
 
+// Update event banner display
+function updateEventDisplay() {
+    let eventBanner = document.getElementById('event-banner');
+
+    // Create banner if it doesn't exist
+    if (!eventBanner) {
+        eventBanner = document.createElement('div');
+        eventBanner.id = 'event-banner';
+        eventBanner.className = 'event-banner';
+        document.getElementById('game-container').insertBefore(
+            eventBanner,
+            document.querySelector('.game-header')
+        );
+    }
+
+    // Update banner based on active event
+    if (gameState.saleEventActive) {
+        eventBanner.textContent = '🎉 FLASH SALE! All prices discounted for 20 seconds! 🎉';
+        eventBanner.className = 'event-banner sale-event';
+        eventBanner.style.display = 'block';
+    } else if (gameState.surgeEventActive) {
+        eventBanner.textContent = '⚡ SURGE PRICING! High demand - prices increased for 20 seconds! ⚡';
+        eventBanner.className = 'event-banner surge-event';
+        eventBanner.style.display = 'block';
+    } else {
+        eventBanner.style.display = 'none';
+    }
+}
+
 // Update seat availability randomly
 function updateSeatAvailability() {
     if (!gameState.isRunning) return;
 
+    // In multiplayer, only host generates updates
+    if (gameState.isMultiplayer && !gameState.isHost) {
+        return; // Guest waits for host's updates
+    }
+
     // Randomly change availability of 2-4 seats
-    const numChanges = Math.floor(getRandomValue() * 3) + 2;
+    const numChanges = Math.floor(Math.random() * 3) + 2;
+    const changedSeats = [];
 
     for (let i = 0; i < numChanges; i++) {
-        const randomSeat = gameState.seats[Math.floor(getRandomValue() * gameState.seats.length)];
-        // Only toggle if not in cart, not already purchased, and not owned by opponent
-        if (!randomSeat.inCart && !randomSeat.isPurchased && !randomSeat.ownedByOpponent) {
+        const randomSeat = gameState.seats[Math.floor(Math.random() * gameState.seats.length)];
+
+        // Check if seat is in opponent's cart (protected from changes)
+        const isInOpponentCart = gameState.opponentCart.includes(randomSeat.id);
+
+        // Only toggle if not in any cart, not already purchased, and not owned by opponent
+        if (!randomSeat.inCart && !randomSeat.isPurchased && !randomSeat.ownedByOpponent && !isInOpponentCart) {
             randomSeat.isAvailable = !randomSeat.isAvailable;
+            changedSeats.push({
+                seatId: randomSeat.id,
+                isAvailable: randomSeat.isAvailable
+            });
         }
+    }
+
+    // Broadcast changes to guest in multiplayer
+    if (gameState.isMultiplayer && changedSeats.length > 0) {
+        sendMultiplayerMessage({
+            type: 'availabilityUpdate',
+            seats: changedSeats
+        });
     }
 
     renderSeats();
@@ -411,15 +609,52 @@ function updateSeatAvailability() {
 function updateSeatPrices() {
     if (!gameState.isRunning) return;
 
+    // In multiplayer, only host generates updates
+    if (gameState.isMultiplayer && !gameState.isHost) {
+        return; // Guest waits for host's updates
+    }
+
+    const priceUpdates = [];
+
     gameState.seats.forEach(seat => {
-        if (!seat.inCart && seat.isAvailable && !seat.isPurchased && !seat.ownedByOpponent) {
-            // Fluctuate price by -30% to +30% of base price
-            const fluctuation = (getRandomValue() - 0.5) * 0.6;
+        // Check if seat is in opponent's cart (protected from price changes)
+        const isInOpponentCart = gameState.opponentCart.includes(seat.id);
+
+        // Don't update prices for seats in any cart, purchased, or opponent-owned
+        if (!seat.inCart && seat.isAvailable && !seat.isPurchased && !seat.ownedByOpponent && !isInOpponentCart) {
+            let fluctuation;
+
+            // During sale event, all prices are discounts (negative fluctuation)
+            if (gameState.saleEventActive) {
+                fluctuation = -Math.random() * 0.3; // 0% to -30% discount
+            }
+            // During surge event, all prices are premiums (positive fluctuation)
+            else if (gameState.surgeEventActive) {
+                fluctuation = Math.random() * 0.3; // 0% to +30% premium
+            }
+            // Normal pricing: fluctuate by -30% to +30% of base price
+            else {
+                fluctuation = (Math.random() - 0.5) * 0.6;
+            }
+
             seat.currentPrice = Math.floor(seat.basePrice * (1 + fluctuation));
             // Ensure minimum price of $20
             seat.currentPrice = Math.max(20, seat.currentPrice);
+
+            priceUpdates.push({
+                seatId: seat.id,
+                currentPrice: seat.currentPrice
+            });
         }
     });
+
+    // Broadcast price changes to guest in multiplayer
+    if (gameState.isMultiplayer && priceUpdates.length > 0) {
+        sendMultiplayerMessage({
+            type: 'priceUpdate',
+            seats: priceUpdates
+        });
+    }
 
     renderSeats();
 }
@@ -428,8 +663,11 @@ function updateSeatPrices() {
 function initiateCheckout() {
     if (gameState.cart.length === 0) return;
 
-    // 60% chance of CAPTCHA
-    if (getRandomValue() < 0.6) {
+    // Always show CAPTCHA if competing with opponent for same seats
+    const hasCompetition = gameState.isMultiplayer && hasOverlappingSeats();
+
+    // Otherwise 60% chance of CAPTCHA
+    if (hasCompetition || Math.random() < 0.6) {
         showCaptcha();
     } else {
         completeCheckout();
@@ -446,6 +684,14 @@ function showCaptcha() {
 
     document.getElementById('captcha-input').value = '';
     document.getElementById('captcha-error').classList.add('hidden');
+
+    // Check if opponent has overlapping seats in multiplayer
+    const warningEl = document.getElementById('captcha-warning');
+    if (gameState.isMultiplayer && hasOverlappingSeats()) {
+        warningEl.classList.remove('hidden');
+    } else {
+        warningEl.classList.add('hidden');
+    }
 
     showModal('captcha-modal');
 
@@ -545,6 +791,16 @@ function completeCheckout() {
         gameState.score += finalScore;
         gameState.totalSaved += savings;
         gameState.ticketsPurchased += gameState.cart.length;
+
+        // Add to purchase history for end game review
+        gameState.purchaseHistory.push({
+            seats: gameState.cart.map(item => ({
+                seatId: item.seatId,
+                price: item.price,
+                basePrice: item.basePrice
+            })),
+            timestamp: Date.now()
+        });
     }
 
     // Remove purchased seats from board permanently
@@ -575,6 +831,14 @@ function completeCheckout() {
 
     // Clear cart
     gameState.cart = [];
+
+    // Send cart update to opponent (now empty after checkout)
+    if (gameState.isMultiplayer) {
+        sendMultiplayerMessage({
+            type: 'cartUpdate',
+            cart: []
+        });
+    }
 
     // Generate new target for next purchase
     gameState.targetTicketCount = generateTargetTicketCount();
@@ -615,7 +879,103 @@ function endGame() {
     document.getElementById('tickets-bought').textContent = gameState.ticketsPurchased;
     document.getElementById('total-saved').textContent = `$${gameState.totalSaved.toFixed(2)}`;
     document.getElementById('skips-count').textContent = gameState.skipsCount;
-    document.getElementById('skip-penalty-total').textContent = `$${(gameState.skipsCount * SKIP_PENALTY).toFixed(2)}`;
+    document.getElementById('skip-penalty-total').textContent = `${gameState.skipsCount * SKIP_PENALTY} pts`;
+
+    // Populate purchase history
+    const purchaseHistoryContainer = document.getElementById('purchase-history');
+    const purchaseHistorySection = document.getElementById('purchase-history-section');
+
+    if (gameState.purchaseHistory.length > 0) {
+        purchaseHistorySection.classList.remove('hidden');
+        purchaseHistoryContainer.innerHTML = '';
+
+        gameState.purchaseHistory.forEach((purchase, index) => {
+            const purchaseDiv = document.createElement('div');
+            purchaseDiv.className = 'purchase-group';
+
+            // Calculate totals for this purchase
+            let totalFaceValue = 0;
+            let totalPaid = 0;
+            purchase.seats.forEach(seat => {
+                totalFaceValue += seat.basePrice;
+                totalPaid += seat.price;
+            });
+            const totalSavings = totalFaceValue - totalPaid;
+            const totalDiscountPercent = ((totalSavings / totalFaceValue) * 100).toFixed(1);
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'purchase-group-header';
+            headerDiv.textContent = `Purchase ${index + 1}`;
+            purchaseDiv.appendChild(headerDiv);
+
+            // Sort seats by ID (e.g., A1, A2, B1, etc.)
+            const sortedSeats = [...purchase.seats].sort((a, b) => {
+                // Extract row letter and column number
+                const rowA = a.seatId.charAt(0);
+                const rowB = b.seatId.charAt(0);
+                const colA = parseInt(a.seatId.substring(1));
+                const colB = parseInt(b.seatId.substring(1));
+
+                // Sort by row first, then by column
+                if (rowA !== rowB) {
+                    return rowA.localeCompare(rowB);
+                }
+                return colA - colB;
+            });
+
+            sortedSeats.forEach(seat => {
+                const seatDiv = document.createElement('div');
+                seatDiv.className = 'purchase-item';
+
+                const discount = ((seat.basePrice - seat.price) / seat.basePrice) * 100;
+                const discountText = discount >= 0
+                    ? `${discount.toFixed(0)}% discount`
+                    : `${Math.abs(discount).toFixed(0)}% premium`;
+
+                const discountClass = discount >= 0 ? 'discount' : 'premium';
+
+                seatDiv.innerHTML = `
+                    <span class="seat-id">${seat.seatId}</span>
+                    <span class="seat-prices">
+                        <span class="face-value">Face: $${seat.basePrice}</span>
+                        <span class="paid-price">Paid: $${seat.price}</span>
+                    </span>
+                    <span class="seat-discount ${discountClass}">${discountText}</span>
+                `;
+
+                purchaseDiv.appendChild(seatDiv);
+            });
+
+            // Add purchase summary
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'purchase-summary';
+
+            const savingsClass = totalSavings >= 0 ? 'discount' : 'premium';
+            const savingsText = totalSavings >= 0
+                ? `$${totalSavings.toFixed(2)} saved (${totalDiscountPercent}%)`
+                : `$${Math.abs(totalSavings).toFixed(2)} premium (${Math.abs(totalDiscountPercent)}%)`;
+
+            summaryDiv.innerHTML = `
+                <div class="summary-row">
+                    <span class="summary-label">Total Face Value:</span>
+                    <span class="summary-value">$${totalFaceValue}</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Total Paid:</span>
+                    <span class="summary-value">$${totalPaid}</span>
+                </div>
+                <div class="summary-row summary-savings ${savingsClass}">
+                    <span class="summary-label">${totalSavings >= 0 ? 'Total Savings:' : 'Total Premium:'}</span>
+                    <span class="summary-value">${savingsText}</span>
+                </div>
+            `;
+
+            purchaseDiv.appendChild(summaryDiv);
+            purchaseHistoryContainer.appendChild(purchaseDiv);
+        });
+    } else {
+        purchaseHistorySection.classList.add('hidden');
+    }
 
     showModal('gameover-modal');
 }
@@ -638,6 +998,14 @@ function skipTarget() {
         }
     });
     gameState.cart = [];
+
+    // Send cart update to opponent (now empty after skip)
+    if (gameState.isMultiplayer) {
+        sendMultiplayerMessage({
+            type: 'cartUpdate',
+            cart: []
+        });
+    }
 
     // Generate new target
     gameState.targetTicketCount = generateTargetTicketCount();
@@ -697,7 +1065,6 @@ function hostGame() {
 
     gameState.isMultiplayer = true;
     gameState.isHost = true;
-    gameState.gameSeed = Date.now(); // Create seed for deterministic randomness
 
     // Create peer with PeerJS
     gameState.peer = new Peer();
@@ -714,10 +1081,9 @@ function hostGame() {
 
         // Wait for connection to be fully established before sending data
         conn.on('open', () => {
-            // Send game seed to guest
+            // Send init message to guest
             conn.send({
-                type: 'init',
-                gameSeed: gameState.gameSeed
+                type: 'init'
             });
 
             setTimeout(() => {
@@ -786,10 +1152,59 @@ function setupConnection(conn) {
 function handleMultiplayerMessage(data) {
     switch (data.type) {
         case 'init':
-            // Guest receives game seed from host
-            gameState.gameSeed = data.gameSeed;
+            // Guest receives init message from host
             hideModal('join-modal');
             startGame();
+            break;
+
+        case 'initialState':
+            // Guest receives initial seat availability from host
+            data.seats.forEach(seatData => {
+                const seat = gameState.seats.find(s => s.id === seatData.seatId);
+                if (seat) {
+                    seat.isAvailable = seatData.isAvailable;
+                }
+            });
+            renderSeats();
+            break;
+
+        case 'targetUpdate':
+            // Guest receives new target from host
+            gameState.targetTicketCount = data.targetTicketCount;
+            updateDisplay();
+            break;
+
+        case 'eventTimes':
+            // Guest receives event timing from host
+            gameState.saleStartTime = data.saleStartTime;
+            gameState.surgeStartTime = data.surgeStartTime;
+            break;
+
+        case 'availabilityUpdate':
+            // Guest receives seat availability changes from host
+            data.seats.forEach(seatData => {
+                const seat = gameState.seats.find(s => s.id === seatData.seatId);
+                if (seat) {
+                    seat.isAvailable = seatData.isAvailable;
+                }
+            });
+            renderSeats();
+            break;
+
+        case 'priceUpdate':
+            // Guest receives price updates from host
+            data.seats.forEach(seatData => {
+                const seat = gameState.seats.find(s => s.id === seatData.seatId);
+                if (seat) {
+                    seat.currentPrice = seatData.currentPrice;
+                }
+            });
+            renderSeats();
+            break;
+
+        case 'cartUpdate':
+            // Update opponent's cart for competition detection
+            gameState.opponentCart = data.cart;
             break;
 
         case 'seatClaimed':
@@ -863,27 +1278,7 @@ function cancelJoin() {
     showModal('multiplayer-modal');
 }
 
-// Seeded random number generator for deterministic randomness
-class SeededRandom {
-    constructor(seed) {
-        this.seed = seed;
-    }
-
-    next() {
-        this.seed = (this.seed * 9301 + 49297) % 233280;
-        return this.seed / 233280;
-    }
-}
-
-let seededRandom = null;
-
-// Get random value (uses seed in multiplayer, Math.random in single player)
-function getRandomValue() {
-    if (gameState.isMultiplayer && seededRandom) {
-        return seededRandom.next();
-    }
-    return Math.random();
-}
+// No longer needed - host-authoritative architecture handles all randomness
 
 // ======================
 // END MULTIPLAYER
@@ -924,8 +1319,6 @@ function setupEventListeners() {
         gameState.isHost = false;
         gameState.connection = null;
         gameState.opponentScore = 0;
-        gameState.gameSeed = null;
-        seededRandom = null;
 
         // Show start modal again
         showModal('start-modal');
