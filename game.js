@@ -890,7 +890,21 @@ function setupEventListeners() {
     // Play again button
     document.getElementById('play-again-btn').addEventListener('click', () => {
         hideModal('gameover-modal');
-        startGame();
+
+        // Reset multiplayer state
+        if (gameState.peer) {
+            gameState.peer.destroy();
+            gameState.peer = null;
+        }
+        gameState.isMultiplayer = false;
+        gameState.isHost = false;
+        gameState.connection = null;
+        gameState.opponentScore = 0;
+        gameState.gameSeed = null;
+        seededRandom = null;
+
+        // Show start modal again
+        showModal('start-modal');
     });
 }
 
