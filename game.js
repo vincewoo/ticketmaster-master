@@ -692,16 +692,19 @@ function hostGame() {
         setupConnection(conn);
         document.getElementById('host-status').textContent = 'Player connected! Starting game...';
 
-        // Send game seed to guest
-        conn.send({
-            type: 'init',
-            gameSeed: gameState.gameSeed
-        });
+        // Wait for connection to be fully established before sending data
+        conn.on('open', () => {
+            // Send game seed to guest
+            conn.send({
+                type: 'init',
+                gameSeed: gameState.gameSeed
+            });
 
-        setTimeout(() => {
-            hideModal('host-modal');
-            startGame();
-        }, 1500);
+            setTimeout(() => {
+                hideModal('host-modal');
+                startGame();
+            }, 1000);
+        });
     });
 
     gameState.peer.on('error', (err) => {
