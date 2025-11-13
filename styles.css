@@ -733,3 +733,32 @@ body {
         margin-top: 15px;
     }
 }
+
+/* Event Banner */
+.event-banner {
+    padding: 15px 20px;
+    text-align: center;
+    font-size: 1.1em;
+    font-weight: bold;
+    display: none;
+    animation: eventPulse 1s ease-in-out infinite;
+}
+
+.event-banner.sale-event {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    color: white;
+}
+
+.event-banner.surge-event {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    color: white;
+}
+
+@keyframes eventPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.85;
+    }
+}
