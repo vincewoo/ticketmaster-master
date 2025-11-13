@@ -347,16 +347,22 @@ function startGame() {
 
     // Start game timer
     gameState.timerInterval = setInterval(updateTimer, 1000);
-
-    // Start dynamic seat updates
-    gameState.availabilityInterval = setInterval(updateSeatAvailability, 2000); // Every 2 seconds
-    gameState.priceInterval = setInterval(updateSeatPrices, 3000); // Every 3 seconds
 }
 
 // Update game timer
 function updateTimer() {
     gameState.timeRemaining--;
     updateDisplay();
+
+    // Update seat availability every 2 seconds (on even seconds)
+    if (gameState.timeRemaining % 2 === 0) {
+        updateSeatAvailability();
+    }
+
+    // Update seat prices every 3 seconds
+    if (gameState.timeRemaining % 3 === 0) {
+        updateSeatPrices();
+    }
 
     if (gameState.timeRemaining <= 0) {
         endGame();
@@ -582,8 +588,6 @@ function completeCheckout() {
 function endGame() {
     gameState.isRunning = false;
     clearInterval(gameState.timerInterval);
-    clearInterval(gameState.availabilityInterval);
-    clearInterval(gameState.priceInterval);
 
     // Notify opponent in multiplayer
     if (gameState.isMultiplayer) {
