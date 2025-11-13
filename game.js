@@ -159,6 +159,9 @@ function renderSeats() {
             const timeSinceClaim = Date.now() - seat.opponentClaimTime;
             if (timeSinceClaim < 3000) {
                 seatElement.classList.add('opponent-seat');
+                // Use animation-delay to prevent restart - start animation from current position
+                const animationProgress = (timeSinceClaim / 3000) * 3; // 0 to 3 seconds
+                seatElement.style.animationDelay = `-${animationProgress}s`;
             } else {
                 // After 3 seconds, just show as unavailable
                 seatElement.classList.add('unavailable');
