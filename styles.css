@@ -541,8 +541,9 @@ body {
 }
 
 @keyframes fadeToGrey {
-    0% {
+    0%, 80% {
         background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
     }
     100% {
         background: #e0e0e0;

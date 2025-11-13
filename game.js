@@ -100,7 +100,8 @@ function generateSeats() {
                 isAvailable: getRandomValue() > 0.3, // 70% initially available
                 inCart: false,
                 isPurchased: false, // Track if seat has been bought
-                ownedByOpponent: false // Track if opponent bought this seat
+                ownedByOpponent: false, // Track if opponent bought this seat
+                opponentClaimTime: null // Track when opponent claimed the seat
             };
             seat.currentPrice = seat.basePrice;
             gameState.seats.push(seat);
@@ -154,7 +155,14 @@ function renderSeats() {
         if (seat.inCart) {
             seatElement.classList.add('in-cart');
         } else if (seat.ownedByOpponent) {
-            seatElement.classList.add('opponent-seat');
+            // Check if animation should still be applied (within 5 seconds of claim)
+            const timeSinceClaim = Date.now() - seat.opponentClaimTime;
+            if (timeSinceClaim < 5000) {
+                seatElement.classList.add('opponent-seat');
+            } else {
+                // After 5 seconds, just show as unavailable
+                seatElement.classList.add('unavailable');
+            }
         } else if (seat.isAvailable) {
             seatElement.classList.add('available');
         } else {
@@ -784,6 +792,7 @@ function handleMultiplayerMessage(data) {
                 seat.isAvailable = false;
                 seat.isPurchased = true;
                 seat.ownedByOpponent = true;
+                seat.opponentClaimTime = Date.now(); // Record when opponent claimed it
             }
             renderSeats();
             break;
