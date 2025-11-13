@@ -537,11 +537,11 @@ body {
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
     color: white;
     cursor: not-allowed;
-    animation: fadeToGrey 5s forwards;
+    animation: fadeToGrey 3s forwards;
 }
 
 @keyframes fadeToGrey {
-    0%, 80% {
+    0% {
         background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         color: white;
     }

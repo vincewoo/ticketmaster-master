@@ -155,12 +155,12 @@ function renderSeats() {
         if (seat.inCart) {
             seatElement.classList.add('in-cart');
         } else if (seat.ownedByOpponent) {
-            // Check if animation should still be applied (within 5 seconds of claim)
+            // Check if animation should still be applied (within 3 seconds of claim)
             const timeSinceClaim = Date.now() - seat.opponentClaimTime;
-            if (timeSinceClaim < 5000) {
+            if (timeSinceClaim < 3000) {
                 seatElement.classList.add('opponent-seat');
             } else {
-                // After 5 seconds, just show as unavailable
+                // After 3 seconds, just show as unavailable
                 seatElement.classList.add('unavailable');
             }
         } else if (seat.isAvailable) {
