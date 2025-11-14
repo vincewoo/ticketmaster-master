@@ -48,6 +48,8 @@ Simply open `index.html` in a web browser - no build system required.
 - `js/captcha/fishingCaptcha.js` - Canvas-based fishing mini-game
 - `js/captcha/nbaCaptcha.js` - Two-stage free throw basketball game
 - `js/captcha/lunarLanderCaptcha.js` - Physics-based lunar landing simulation
+- `js/captcha/tanksCaptcha.js` - Artillery aiming game with angle and power
+- `js/captcha/dartsCaptcha.js` - Steady hand dartboard bullseye challenge
 
 **Legacy:**
 - `game.js` - Original monolithic version (kept for reference, not loaded)
@@ -126,7 +128,7 @@ The game uses a single `gameState` object to track:
      - Medium red (#dc2626): 5-10% premium
      - Dark red (#b91c1c): 10%+ premium
 
-4. **CAPTCHA System** (6 Different Types):
+4. **CAPTCHA System** (8 Different Types):
    - 60% chance on checkout (100% if competing with opponent for same seats)
    - Random CAPTCHA type selected each time
    - Warning shown if opponent is competing for same seats
@@ -138,6 +140,8 @@ The game uses a single `gameState` object to track:
    - **Fishing Game**: Keep fish in green zone to fill progress bar (15s timer, canvas-based physics)
    - **NBA Free Throw**: Two-stage basketball shot (horizontal aim + power control, 10s timer)
    - **Lunar Lander**: Land the lunar module safely with realistic physics (15s timer, hold button for thrust)
+   - **Tanks Artillery**: Hit enemy tank by adjusting angle and power (20s timer, projectile physics)
+   - **Darts Bullseye**: Steady your hand - throw dart when moving crosshair is over bullseye (15s timer, timing-based)
 
 5. **Scoring**:
    - Points earned = total savings (base price - purchase price)
@@ -420,8 +424,23 @@ All CAPTCHA modules export:
 - Multiple attempts allowed until time runs out
 - Tests physics understanding, aiming skill, and adjustment
 
+**8. Darts Bullseye CAPTCHA** (`dartsCaptcha.js`)
+- Steady hand challenge: hit the bullseye with a dart throw
+- Crosshair moves in Lissajous curve pattern (combining two oscillations at different speeds)
+- Motion creates organic figure-8 like patterns that pass through the bullseye center
+- Randomized speeds and radii on each game for unpredictability
+- Player clicks "THROW DART" button to throw at current crosshair position
+- Dartboard with classic concentric rings (bullseye, 25, 50, 75, 100 point zones)
+- Crosshair changes color to green when over bullseye (visual cue for timing)
+- Success requires dart landing within bullseye radius (~25px)
+- Miss shows distance from bullseye and allows retry
+- 15-second timer
+- Multiple attempts allowed until time runs out or success
+- Canvas-based rendering with smooth 60fps animation
+- Tests timing, reflex, and precision (different from Tanks' physics-based aiming)
+
 ### CAPTCHA Selection Logic
-Random selection on checkout, weighted equally (~14.3% chance each for 7 types). Can be modified in checkout logic if certain CAPTCHAs should appear more/less frequently.
+Random selection on checkout, weighted equally (12.5% chance each for 8 types). Can be modified in checkout logic if certain CAPTCHAs should appear more/less frequently.
 
 ### HOW TO CREATE A NEW CAPTCHA (Step-by-Step Pattern)
 

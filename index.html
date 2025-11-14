@@ -299,6 +299,31 @@
             </div>
         </div>
 
+        <!-- Darts CAPTCHA Modal -->
+        <div id="darts-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Steady your hand and hit the bullseye to prove you're human!</p>
+                <div id="darts-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="darts-timer">15</span>s
+                </div>
+                <div class="darts-game-container">
+                    <canvas id="darts-canvas" width="600" height="400"></canvas>
+                    <div class="darts-instruction">
+                        Click "THROW DART" when the crosshair is over the bullseye!
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="darts-throw-btn" class="btn-primary btn-large">🎯 THROW DART</button>
+                    <button id="darts-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="darts-feedback" class="captcha-error"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -437,6 +462,7 @@
                     <button id="debug-nba-captcha" class="debug-btn">NBA Free Throw</button>
                     <button id="debug-lunar-lander-captcha" class="debug-btn">Lunar Lander</button>
                     <button id="debug-tanks-captcha" class="debug-btn">Tanks Artillery</button>
+                    <button id="debug-darts-captcha" class="debug-btn">Darts Bullseye</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>

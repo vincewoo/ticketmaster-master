@@ -86,4 +86,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugDartsCaptcha = document.getElementById('debug-darts-captcha');
+    if (debugDartsCaptcha) {
+        debugDartsCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showDartsCaptcha) {
+                window.showDartsCaptcha();
+            }
+        });
+    }
 }
