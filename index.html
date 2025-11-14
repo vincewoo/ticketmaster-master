@@ -178,6 +178,37 @@
             </div>
         </div>
 
+        <!-- Fishing CAPTCHA Modal -->
+        <div id="fishing-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Catch the fish to prove you're human!</p>
+                <div id="fishing-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="fishing-timer">15</span>s
+                </div>
+                <div class="fishing-game-container">
+                    <canvas id="fishing-canvas" width="400" height="300"></canvas>
+                    <div class="fishing-progress-container">
+                        <div class="fishing-progress-label">Catch Progress:</div>
+                        <div class="fishing-progress-bar">
+                            <div id="fishing-progress-fill" class="fishing-progress-fill"></div>
+                        </div>
+                    </div>
+                    <div class="fishing-instruction">
+                        Hold the button to keep the fish in the green zone!
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="fishing-action-btn" class="btn-primary btn-large">HOLD TO FISH</button>
+                    <button id="fishing-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="fishing-captcha-error" class="captcha-error hidden"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -299,8 +330,29 @@
                 </div>
             </div>
         </div>
+
+        <!-- Debug Panel -->
+        <div id="debug-panel" class="debug-panel hidden">
+            <div class="debug-header">
+                <h3>🐛 Debug Mode</h3>
+                <button id="debug-close-btn" class="debug-close">×</button>
+            </div>
+            <div class="debug-content">
+                <h4>Test CAPTCHAs:</h4>
+                <div class="debug-buttons">
+                    <button id="debug-text-captcha" class="debug-btn">Text CAPTCHA</button>
+                    <button id="debug-gas-captcha" class="debug-btn">Gas Pump</button>
+                    <button id="debug-puzzle-captcha" class="debug-btn">Puzzle Slider</button>
+                    <button id="debug-fishing-captcha" class="debug-btn">Fishing Game</button>
+                </div>
+                <div class="debug-info">
+                    <p><strong>Toggle:</strong> Press <kbd>D</kbd> key</p>
+                    <p><em>Debug mode only works when game is running</em></p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="game.js?v=32"></script>
+    <script src="game.js?v=38"></script>
 </body>
 </html>

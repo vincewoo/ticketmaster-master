@@ -2,6 +2,7 @@
 const GAME_DURATION = 120; // 2 minutes in seconds
 const CAPTCHA_DURATION = 10; // seconds to solve CAPTCHA
 const GAS_PUMP_CAPTCHA_DURATION = 20; // seconds to solve gas pump CAPTCHA (needs more time)
+const FISHING_CAPTCHA_DURATION = 15; // seconds to solve fishing CAPTCHA
 const SEAT_ROWS = 8;
 const SEAT_COLS = 12;
 const TOTAL_SEATS = SEAT_ROWS * SEAT_COLS;
@@ -43,7 +44,17 @@ let gameState = {
     gasPumpTarget: 0,
     gasPumpCurrent: 0,
     gasPumpAttempts: 3,
-    gasPumpActive: false
+    gasPumpActive: false,
+    // Fishing CAPTCHA state
+    fishingInterval: null,
+    fishingBarPosition: 50, // Fish bar position (0-100)
+    fishingZonePosition: 50, // Green zone position (0-100)
+    fishingZoneSize: 18, // Size of green zone (made slightly bigger)
+    fishingZoneVelocity: 1.4, // Zone movement velocity (increased for more challenge)
+    fishingZoneDirection: 1, // 1 = down, -1 = up
+    fishingProgress: 0, // Catch progress (0-100)
+    fishingButtonHeld: false,
+    fishingActive: false
 };
 
 // Seat price tiers
@@ -827,14 +838,16 @@ function initiateCheckout() {
 
     // Otherwise 60% chance of CAPTCHA
     if (hasCompetition || Math.random() < 0.6) {
-        // Randomly choose between text CAPTCHA, gas pump CAPTCHA, and puzzle CAPTCHA
+        // Randomly choose between text CAPTCHA, gas pump CAPTCHA, puzzle CAPTCHA, and fishing CAPTCHA
         const captchaType = Math.random();
-        if (captchaType < 0.33) {
+        if (captchaType < 0.25) {
             showCaptcha();
-        } else if (captchaType < 0.66) {
+        } else if (captchaType < 0.5) {
             showGasPumpCaptcha();
-        } else {
+        } else if (captchaType < 0.75) {
             showPuzzleCaptcha();
+        } else {
+            showFishingCaptcha();
         }
     } else {
         completeCheckout();
@@ -1302,6 +1315,250 @@ function cancelPuzzleCaptcha() {
 
 // ======================
 // END PUZZLE SLIDER CAPTCHA
+// ======================
+
+// ======================
+// FISHING CAPTCHA (Stardew Valley inspired)
+// ======================
+
+function showFishingCaptcha() {
+    // Reset fishing state
+    gameState.fishingBarPosition = 50;
+    gameState.fishingZonePosition = 50;
+    gameState.fishingZoneVelocity = 1.4;
+    gameState.fishingZoneDirection = 1;
+    gameState.fishingProgress = 0;
+    gameState.fishingButtonHeld = false;
+    gameState.fishingActive = false;
+    gameState.captchaTimeRemaining = FISHING_CAPTCHA_DURATION;
+
+    // Check if opponent has overlapping seats in multiplayer
+    const warningEl = document.getElementById('fishing-captcha-warning');
+    if (gameState.isMultiplayer && hasOverlappingSeats()) {
+        warningEl.classList.remove('hidden');
+    } else {
+        warningEl.classList.add('hidden');
+    }
+
+    document.getElementById('fishing-captcha-error').classList.add('hidden');
+    showModal('fishing-captcha-modal');
+
+    // Start countdown timer
+    updateFishingTimer();
+    gameState.captchaInterval = setInterval(() => {
+        gameState.captchaTimeRemaining--;
+        updateFishingTimer();
+        if (gameState.captchaTimeRemaining <= 0) {
+            clearInterval(gameState.captchaInterval);
+            stopFishingGame();
+            showFishingCaptchaError('Time expired! Try again.');
+            setTimeout(() => {
+                hideModal('fishing-captcha-modal');
+            }, 1500);
+        }
+    }, 1000);
+
+    // Auto-start fishing game after 500ms
+    setTimeout(startFishingGame, 500);
+}
+
+function startFishingGame() {
+    gameState.fishingActive = true;
+    gameState.fishingProgress = 0;
+    updateFishingProgressBar();
+
+    // Game loop - updates every 50ms
+    gameState.fishingInterval = setInterval(() => {
+        // Update fish bar position based on button held state
+        if (gameState.fishingButtonHeld) {
+            // Bar rises when button held
+            gameState.fishingBarPosition = Math.max(0, gameState.fishingBarPosition - 2.5);
+        } else {
+            // Bar falls when button not held (gravity)
+            gameState.fishingBarPosition = Math.min(100, gameState.fishingBarPosition + 1.8);
+        }
+
+        // Smooth continuous zone movement (like Stardew Valley)
+        // Speed increases gradually over time
+        const timeElapsed = FISHING_CAPTCHA_DURATION - gameState.captchaTimeRemaining;
+        const speedMultiplier = 1 + (timeElapsed / FISHING_CAPTCHA_DURATION) * 1.5; // 1x to 2.5x speed
+
+        // Move zone smoothly in current direction
+        gameState.fishingZonePosition += gameState.fishingZoneDirection * gameState.fishingZoneVelocity * speedMultiplier;
+
+        // Bounce at edges and occasionally change direction
+        if (gameState.fishingZonePosition <= 0) {
+            gameState.fishingZonePosition = 0;
+            gameState.fishingZoneDirection = 1; // Move down
+            // Randomize velocity slightly (increased range)
+            gameState.fishingZoneVelocity = 1.0 + Math.random() * 0.8;
+        } else if (gameState.fishingZonePosition >= 100 - gameState.fishingZoneSize) {
+            gameState.fishingZonePosition = 100 - gameState.fishingZoneSize;
+            gameState.fishingZoneDirection = -1; // Move up
+            // Randomize velocity slightly (increased range)
+            gameState.fishingZoneVelocity = 1.0 + Math.random() * 0.8;
+        }
+
+        // Occasionally change direction (adds unpredictability)
+        if (Math.random() < 0.02) { // 2% chance per frame to change direction
+            gameState.fishingZoneDirection *= -1;
+            gameState.fishingZoneVelocity = 1.0 + Math.random() * 0.8;
+        }
+
+        // Check if bar is in green zone
+        const barSize = 14; // Slightly larger bar
+        const barTop = gameState.fishingBarPosition;
+        const barBottom = gameState.fishingBarPosition + barSize;
+        const zoneTop = gameState.fishingZonePosition;
+        const zoneBottom = gameState.fishingZonePosition + gameState.fishingZoneSize;
+
+        // Check for overlap
+        const isInZone = !(barBottom < zoneTop || barTop > zoneBottom);
+
+        if (isInZone) {
+            // Increase progress when in zone
+            gameState.fishingProgress = Math.min(100, gameState.fishingProgress + 1.2);
+        } else {
+            // Decrease progress when out of zone (slower loss to make it easier)
+            gameState.fishingProgress = Math.max(0, gameState.fishingProgress - 0.7);
+        }
+
+        // Update visual display
+        drawFishingGame(isInZone);
+        updateFishingProgressBar();
+
+        // Check if caught fish (reached 100% progress)
+        if (gameState.fishingProgress >= 100) {
+            stopFishingGame();
+            clearInterval(gameState.captchaInterval);
+            showFishingCaptchaError('✅ Caught! Processing your order...');
+            setTimeout(() => {
+                hideModal('fishing-captcha-modal');
+                completeCheckout();
+            }, 1000);
+        }
+    }, 50);
+}
+
+function stopFishingGame() {
+    gameState.fishingActive = false;
+    if (gameState.fishingInterval) {
+        clearInterval(gameState.fishingInterval);
+        gameState.fishingInterval = null;
+    }
+}
+
+function drawFishingGame(isInZone) {
+    const canvas = document.getElementById('fishing-canvas');
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw water background with gradient (already set in CSS)
+
+    // Draw bubbles for ambiance
+    const bubbleCount = 8;
+    for (let i = 0; i < bubbleCount; i++) {
+        const x = (i * width / bubbleCount) + (Date.now() / 20 % (width / bubbleCount));
+        const y = height - ((Date.now() / 10 + i * 50) % height);
+        const size = 3 + Math.sin(Date.now() / 200 + i) * 2;
+
+        ctx.beginPath();
+        ctx.arc(x % width, y, size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+
+    // Draw the fishing bar track (right side)
+    const trackX = width - 60;
+    const trackWidth = 40;
+    const trackY = 20;
+    const trackHeight = height - 40;
+
+    // Track background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(trackX, trackY, trackWidth, trackHeight);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(trackX, trackY, trackWidth, trackHeight);
+
+    // Draw green zone
+    const zoneY = trackY + (gameState.fishingZonePosition / 100) * trackHeight;
+    const zoneHeight = (gameState.fishingZoneSize / 100) * trackHeight;
+    ctx.fillStyle = isInZone ? 'rgba(34, 197, 94, 0.9)' : 'rgba(34, 197, 94, 0.7)';
+    ctx.fillRect(trackX, zoneY, trackWidth, zoneHeight);
+    ctx.strokeStyle = '#15803d';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(trackX, zoneY, trackWidth, zoneHeight);
+
+    // Draw fish bar (player controlled)
+    const barSize = 14; // Match the size in game loop
+    const barY = trackY + (gameState.fishingBarPosition / 100) * trackHeight;
+    const barHeight = (barSize / 100) * trackHeight;
+
+    // Bar color changes based on button state
+    const barColor = gameState.fishingButtonHeld ? '#3b82f6' : '#60a5fa';
+    ctx.fillStyle = barColor;
+    ctx.fillRect(trackX + 5, barY, trackWidth - 10, barHeight);
+    ctx.strokeStyle = '#1e40af';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(trackX + 5, barY, trackWidth - 10, barHeight);
+
+    // Draw fish icon (left side)
+    const fishX = 80 + Math.sin(Date.now() / 300) * 20;
+    const fishY = height / 2 + Math.cos(Date.now() / 400) * 30;
+
+    ctx.font = 'bold 48px Arial';
+    ctx.fillStyle = isInZone ? '#fbbf24' : '#94a3b8';
+    ctx.fillText('🐟', fishX, fishY);
+
+    // Draw instruction text
+    ctx.font = 'bold 16px Arial';
+    ctx.fillStyle = '#1e3a8a';
+    ctx.textAlign = 'center';
+    ctx.fillText('Keep the blue bar', width / 2 - 100, height - 20);
+    ctx.fillText('in the green zone!', width / 2 - 100, height - 5);
+}
+
+function updateFishingProgressBar() {
+    const progressFill = document.getElementById('fishing-progress-fill');
+    progressFill.style.width = gameState.fishingProgress + '%';
+}
+
+function updateFishingTimer() {
+    document.getElementById('fishing-timer').textContent = gameState.captchaTimeRemaining;
+}
+
+function startFishingAction() {
+    if (gameState.fishingActive) {
+        gameState.fishingButtonHeld = true;
+    }
+}
+
+function stopFishingAction() {
+    gameState.fishingButtonHeld = false;
+}
+
+function cancelFishingCaptcha() {
+    stopFishingGame();
+    clearInterval(gameState.captchaInterval);
+    hideModal('fishing-captcha-modal');
+}
+
+function showFishingCaptchaError(message) {
+    const errorEl = document.getElementById('fishing-captcha-error');
+    errorEl.textContent = message;
+    errorEl.classList.remove('hidden');
+}
+
+// ======================
+// END FISHING CAPTCHA
 // ======================
 
 // Complete checkout
@@ -1918,6 +2175,22 @@ function setupEventListeners() {
     document.getElementById('puzzle-cancel').addEventListener('click', cancelPuzzleCaptcha);
     document.getElementById('puzzle-slider').addEventListener('input', updatePuzzlePiecePosition);
 
+    // Fishing CAPTCHA buttons
+    document.getElementById('fishing-action-btn').addEventListener('mousedown', startFishingAction);
+    document.getElementById('fishing-action-btn').addEventListener('mouseup', stopFishingAction);
+    document.getElementById('fishing-action-btn').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startFishingAction();
+    });
+    document.getElementById('fishing-action-btn').addEventListener('touchend', (e) => {
+        e.preventDefault();
+        stopFishingAction();
+    });
+    document.getElementById('fishing-cancel-btn').addEventListener('click', cancelFishingCaptcha);
+
+    // Debug panel
+    setupDebugPanel();
+
     // Play again button
     document.getElementById('play-again-btn').addEventListener('click', () => {
         hideModal('gameover-modal');
@@ -1936,6 +2209,56 @@ function setupEventListeners() {
         showModal('start-modal');
     });
 }
+
+// ======================
+// DEBUG PANEL
+// ======================
+
+function setupDebugPanel() {
+    const debugPanel = document.getElementById('debug-panel');
+    const debugCloseBtn = document.getElementById('debug-close-btn');
+
+    // Toggle debug panel with 'D' key (only when game is running)
+    document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'd' && gameState.isRunning) {
+            debugPanel.classList.toggle('hidden');
+        }
+    });
+
+    // Close button
+    debugCloseBtn.addEventListener('click', () => {
+        debugPanel.classList.add('hidden');
+    });
+
+    // Debug CAPTCHA buttons
+    document.getElementById('debug-text-captcha').addEventListener('click', () => {
+        if (gameState.isRunning) {
+            showCaptcha();
+        }
+    });
+
+    document.getElementById('debug-gas-captcha').addEventListener('click', () => {
+        if (gameState.isRunning) {
+            showGasPumpCaptcha();
+        }
+    });
+
+    document.getElementById('debug-puzzle-captcha').addEventListener('click', () => {
+        if (gameState.isRunning) {
+            showPuzzleCaptcha();
+        }
+    });
+
+    document.getElementById('debug-fishing-captcha').addEventListener('click', () => {
+        if (gameState.isRunning) {
+            showFishingCaptcha();
+        }
+    });
+}
+
+// ======================
+// END DEBUG PANEL
+// ======================
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', initGame);
