@@ -1,8 +1,7 @@
 // Game State
 const GAME_DURATION = 120; // 2 minutes in seconds
 const CAPTCHA_DURATION = 10; // seconds to solve CAPTCHA
-const GAS_PUMP_CAPTCHA_DURATION = 20; // seconds to solve gas pump CAPTCHA (needs more time)
-const FISHING_CAPTCHA_DURATION = 15; // seconds to solve fishing CAPTCHA
+const FISHING_CAPTCHA_DURATION = 10; // seconds to solve fishing CAPTCHA
 const SEAT_ROWS = 8;
 const SEAT_COLS = 12;
 const TOTAL_SEATS = SEAT_ROWS * SEAT_COLS;
@@ -2218,9 +2217,9 @@ function setupDebugPanel() {
     const debugPanel = document.getElementById('debug-panel');
     const debugCloseBtn = document.getElementById('debug-close-btn');
 
-    // Toggle debug panel with 'D' key (only when game is running)
+    // Toggle debug panel with `(back-tick) key (only when game is running)
     document.addEventListener('keydown', (e) => {
-        if (e.key.toLowerCase() === 'd' && gameState.isRunning) {
+        if (e.key === '`' && gameState.isRunning) {
             debugPanel.classList.toggle('hidden');
         }
     });
