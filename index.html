@@ -147,6 +147,37 @@
             </div>
         </div>
 
+        <!-- Puzzle Slider CAPTCHA Modal -->
+        <div id="puzzle-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Slide the puzzle piece to complete the image!</p>
+                <div id="puzzle-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="puzzle-timer">10</span>s
+                </div>
+                <div class="puzzle-container">
+                    <canvas id="puzzle-canvas" width="400" height="250"></canvas>
+                    <div class="puzzle-piece-container" id="puzzle-piece-container">
+                        <canvas id="puzzle-piece" width="80" height="80"></canvas>
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <input type="range" id="puzzle-slider" class="puzzle-slider" min="0" max="340" value="0">
+                    <div class="slider-track">
+                        <div class="slider-arrow">→</div>
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="puzzle-submit" class="btn-primary">Verify</button>
+                    <button id="puzzle-cancel" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="puzzle-captcha-error" class="captcha-error hidden"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -270,6 +301,6 @@
         </div>
     </div>
 
-    <script src="game.js?v=28"></script>
+    <script src="game.js?v=32"></script>
 </body>
 </html>
