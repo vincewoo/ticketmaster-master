@@ -59,4 +59,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugNBACaptcha = document.getElementById('debug-nba-captcha');
+    if (debugNBACaptcha) {
+        debugNBACaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showNBACaptcha) {
+                window.showNBACaptcha();
+            }
+        });
+    }
 }

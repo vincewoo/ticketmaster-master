@@ -209,6 +209,32 @@
             </div>
         </div>
 
+        <!-- NBA Free Throw CAPTCHA Modal -->
+        <div id="nba-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Make the free throw to prove you're human!</p>
+                <div id="nba-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="nba-timer">10</span>s
+                </div>
+                <div class="nba-game-container">
+                    <canvas id="nba-canvas" width="400" height="300"></canvas>
+                    <div class="nba-instruction">
+                        <div id="nba-stage-text">STAGE 1: AIM (Horizontal)</div>
+                        <div class="nba-help-text">Click when the indicator is in the center zone!</div>
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="nba-shoot-btn" class="btn-primary btn-large">SHOOT</button>
+                    <button id="nba-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="nba-captcha-error" class="captcha-error hidden"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -344,6 +370,7 @@
                     <button id="debug-gas-captcha" class="debug-btn">Gas Pump</button>
                     <button id="debug-puzzle-captcha" class="debug-btn">Puzzle Slider</button>
                     <button id="debug-fishing-captcha" class="debug-btn">Fishing Game</button>
+                    <button id="debug-nba-captcha" class="debug-btn">NBA Free Throw</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>

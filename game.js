@@ -53,7 +53,16 @@ let gameState = {
     fishingZoneDirection: 1, // 1 = down, -1 = up
     fishingProgress: 0, // Catch progress (0-100)
     fishingButtonHeld: false,
-    fishingActive: false
+    fishingActive: false,
+    // NBA Free Throw CAPTCHA state
+    nbaInterval: null,
+    nbaStage: 1, // 1 = horizontal/aim, 2 = vertical/strength
+    nbaIndicatorPosition: 50, // Current position (0-100)
+    nbaIndicatorVelocity: 1.5, // Speed and direction
+    nbaIndicatorDirection: 1, // 1 = forward, -1 = backward
+    nbaFirstStageResult: null, // Store result from stage 1
+    nbaActive: false,
+    nbaCenterZoneSize: 18 // Size of success zone (percent)
 };
 
 // Seat price tiers
@@ -837,16 +846,18 @@ function initiateCheckout() {
 
     // Otherwise 60% chance of CAPTCHA
     if (hasCompetition || Math.random() < 0.6) {
-        // Randomly choose between text CAPTCHA, gas pump CAPTCHA, puzzle CAPTCHA, and fishing CAPTCHA
+        // Randomly choose between text CAPTCHA, gas pump CAPTCHA, puzzle CAPTCHA, fishing CAPTCHA, and NBA CAPTCHA
         const captchaType = Math.random();
-        if (captchaType < 0.25) {
+        if (captchaType < 0.2) {
             showCaptcha();
-        } else if (captchaType < 0.5) {
+        } else if (captchaType < 0.4) {
             showGasPumpCaptcha();
-        } else if (captchaType < 0.75) {
+        } else if (captchaType < 0.6) {
             showPuzzleCaptcha();
-        } else {
+        } else if (captchaType < 0.8) {
             showFishingCaptcha();
+        } else {
+            showNBACaptcha();
         }
     } else {
         completeCheckout();
@@ -1560,6 +1571,314 @@ function showFishingCaptchaError(message) {
 // END FISHING CAPTCHA
 // ======================
 
+// ======================
+// NBA FREE THROW CAPTCHA
+// ======================
+
+function showNBACaptcha() {
+    // Reset NBA state
+    gameState.nbaStage = 1;
+    gameState.nbaIndicatorPosition = 50;
+    gameState.nbaIndicatorVelocity = 1.5;
+    gameState.nbaIndicatorDirection = 1;
+    gameState.nbaFirstStageResult = null;
+    gameState.nbaActive = false;
+    gameState.captchaTimeRemaining = CAPTCHA_DURATION;
+
+    // Check if opponent has overlapping seats in multiplayer
+    const warningEl = document.getElementById('nba-captcha-warning');
+    if (gameState.isMultiplayer && hasOverlappingSeats()) {
+        warningEl.classList.remove('hidden');
+    } else {
+        warningEl.classList.add('hidden');
+    }
+
+    // Update stage text
+    document.getElementById('nba-stage-text').textContent = 'STAGE 1: AIM (Horizontal)';
+    document.getElementById('nba-captcha-error').classList.add('hidden');
+    document.getElementById('nba-shoot-btn').disabled = false;
+
+    showModal('nba-captcha-modal');
+
+    // Start countdown timer
+    updateNBATimer();
+    gameState.captchaInterval = setInterval(() => {
+        gameState.captchaTimeRemaining--;
+        updateNBATimer();
+        if (gameState.captchaTimeRemaining <= 0) {
+            clearInterval(gameState.captchaInterval);
+            stopNBAGame();
+            showNBACaptchaError('Time expired! Try again.');
+            setTimeout(() => {
+                hideModal('nba-captcha-modal');
+            }, 1500);
+        }
+    }, 1000);
+
+    // Auto-start NBA game after 500ms
+    setTimeout(startNBAGame, 500);
+}
+
+function startNBAGame() {
+    gameState.nbaActive = true;
+
+    // Game loop - updates every 50ms for smooth animation
+    gameState.nbaInterval = setInterval(() => {
+        // Move indicator in current direction
+        gameState.nbaIndicatorPosition += gameState.nbaIndicatorDirection * gameState.nbaIndicatorVelocity;
+
+        // Bounce at edges
+        if (gameState.nbaIndicatorPosition >= 100) {
+            gameState.nbaIndicatorPosition = 100;
+            gameState.nbaIndicatorDirection = -1;
+        } else if (gameState.nbaIndicatorPosition <= 0) {
+            gameState.nbaIndicatorPosition = 0;
+            gameState.nbaIndicatorDirection = 1;
+        }
+
+        // Draw the meter
+        drawNBAMeter();
+    }, 50);
+}
+
+function stopNBAGame() {
+    gameState.nbaActive = false;
+    if (gameState.nbaInterval) {
+        clearInterval(gameState.nbaInterval);
+        gameState.nbaInterval = null;
+    }
+}
+
+function drawNBAMeter() {
+    const canvas = document.getElementById('nba-canvas');
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw basketball court wood texture pattern
+    ctx.fillStyle = '#d4824a';
+    ctx.fillRect(0, 0, width, height);
+
+    // Add wood grain lines
+    ctx.strokeStyle = 'rgba(139, 69, 19, 0.2)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < width; i += 40) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, height);
+        ctx.stroke();
+    }
+
+    // Determine which stage we're in
+    const isHorizontal = gameState.nbaStage === 1;
+
+    // Calculate center zone bounds
+    const centerStart = 50 - (gameState.nbaCenterZoneSize / 2);
+    const centerEnd = 50 + (gameState.nbaCenterZoneSize / 2);
+
+    if (isHorizontal) {
+        // STAGE 1: Horizontal bar (aim)
+        const barY = height / 2 - 30;
+        const barHeight = 60;
+        const barX = 20;
+        const barWidth = width - 40;
+
+        // Draw track background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+        // Draw center success zone (green)
+        const zoneX = barX + (centerStart / 100) * barWidth;
+        const zoneWidth = (gameState.nbaCenterZoneSize / 100) * barWidth;
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.7)';
+        ctx.fillRect(zoneX, barY, zoneWidth, barHeight);
+        ctx.strokeStyle = '#15803d';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(zoneX, barY, zoneWidth, barHeight);
+
+        // Draw indicator (basketball orange)
+        const indicatorX = barX + (gameState.nbaIndicatorPosition / 100) * barWidth;
+        const indicatorSize = 50;
+        ctx.fillStyle = '#ff8c42';
+        ctx.beginPath();
+        ctx.arc(indicatorX, barY + barHeight / 2, indicatorSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#d4652a';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Add basketball lines
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(indicatorX, barY + barHeight / 2, indicatorSize / 2 - 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(indicatorX - indicatorSize / 2 + 5, barY + barHeight / 2);
+        ctx.lineTo(indicatorX + indicatorSize / 2 - 5, barY + barHeight / 2);
+        ctx.stroke();
+
+        // Draw stage indicator
+        ctx.fillStyle = '#1e3c72';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🎯 AIM', width / 2, barY - 15);
+
+    } else {
+        // STAGE 2: Vertical bar (strength)
+        const barX = width / 2 - 30;
+        const barWidth = 60;
+        const barY = 20;
+        const barHeight = height - 40;
+
+        // Draw track background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+        // Draw center success zone (green)
+        const zoneY = barY + (centerStart / 100) * barHeight;
+        const zoneHeight = (gameState.nbaCenterZoneSize / 100) * barHeight;
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.7)';
+        ctx.fillRect(barX, zoneY, barWidth, zoneHeight);
+        ctx.strokeStyle = '#15803d';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(barX, zoneY, barWidth, zoneHeight);
+
+        // Draw indicator (basketball orange)
+        const indicatorY = barY + (gameState.nbaIndicatorPosition / 100) * barHeight;
+        const indicatorSize = 50;
+        ctx.fillStyle = '#ff8c42';
+        ctx.beginPath();
+        ctx.arc(barX + barWidth / 2, indicatorY, indicatorSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#d4652a';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Add basketball lines
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(barX + barWidth / 2, indicatorY, indicatorSize / 2 - 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(barX + barWidth / 2, indicatorY - indicatorSize / 2 + 5);
+        ctx.lineTo(barX + barWidth / 2, indicatorY + indicatorSize / 2 - 5);
+        ctx.stroke();
+
+        // Draw stage indicator
+        ctx.fillStyle = '#1e3c72';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚡ POWER', width / 2, 15);
+
+        // Show stage 1 result if available
+        if (gameState.nbaFirstStageResult !== null) {
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = gameState.nbaFirstStageResult ? '#15803d' : '#dc2626';
+            ctx.fillText(
+                gameState.nbaFirstStageResult ? '✓ Stage 1: Perfect!' : '✗ Stage 1: Miss',
+                width / 2,
+                height - 10
+            );
+        }
+    }
+}
+
+function updateNBATimer() {
+    document.getElementById('nba-timer').textContent = gameState.captchaTimeRemaining;
+}
+
+function handleNBAShoot() {
+    if (!gameState.nbaActive) return;
+
+    // Calculate center zone bounds
+    const centerStart = 50 - (gameState.nbaCenterZoneSize / 2);
+    const centerEnd = 50 + (gameState.nbaCenterZoneSize / 2);
+
+    // Check if indicator is in center zone
+    const isInCenter = gameState.nbaIndicatorPosition >= centerStart &&
+                       gameState.nbaIndicatorPosition <= centerEnd;
+
+    if (gameState.nbaStage === 1) {
+        // Stage 1: Horizontal/Aim
+        gameState.nbaFirstStageResult = isInCenter;
+
+        if (isInCenter) {
+            // Success on stage 1 - move to stage 2
+            gameState.nbaStage = 2;
+            gameState.nbaIndicatorPosition = 50;
+            gameState.nbaIndicatorDirection = 1;
+            document.getElementById('nba-stage-text').textContent = 'STAGE 2: POWER (Vertical)';
+            showNBACaptchaError('✓ Good aim! Now set the power!');
+        } else {
+            // Failed stage 1
+            showNBACaptchaError('✗ Missed! Try again.');
+            setTimeout(() => {
+                // Reset to stage 1
+                gameState.nbaStage = 1;
+                gameState.nbaIndicatorPosition = 50;
+                gameState.nbaIndicatorDirection = 1;
+                gameState.nbaFirstStageResult = null;
+                document.getElementById('nba-stage-text').textContent = 'STAGE 1: AIM (Horizontal)';
+                document.getElementById('nba-captcha-error').classList.add('hidden');
+            }, 1000);
+        }
+    } else {
+        // Stage 2: Vertical/Power
+        if (isInCenter && gameState.nbaFirstStageResult) {
+            // SUCCESS - both stages completed!
+            stopNBAGame();
+            clearInterval(gameState.captchaInterval);
+            showNBACaptchaError('🏀 SWISH! Perfect shot!');
+            setTimeout(() => {
+                hideModal('nba-captcha-modal');
+                completeCheckout();
+            }, 1000);
+        } else {
+            // Failed stage 2 or stage 1 was failed
+            stopNBAGame();
+            clearInterval(gameState.captchaInterval);
+            showNBACaptchaError('✗ Brick! Free throw missed.');
+            setTimeout(() => {
+                hideModal('nba-captcha-modal');
+            }, 1500);
+        }
+    }
+}
+
+function cancelNBACaptcha() {
+    stopNBAGame();
+    clearInterval(gameState.captchaInterval);
+    hideModal('nba-captcha-modal');
+}
+
+function showNBACaptchaError(message) {
+    const errorEl = document.getElementById('nba-captcha-error');
+    errorEl.textContent = message;
+    errorEl.classList.remove('hidden');
+
+    // Change color based on message type
+    if (message.includes('✓') || message.includes('🏀') || message.includes('Perfect')) {
+        errorEl.style.color = '#28a745';
+    } else {
+        errorEl.style.color = '#dc3545';
+    }
+}
+
+// ======================
+// END NBA FREE THROW CAPTCHA
+// ======================
+
 // Complete checkout
 function completeCheckout() {
     // Check if purchase is valid (correct count and adjacent)
@@ -2187,6 +2506,10 @@ function setupEventListeners() {
     });
     document.getElementById('fishing-cancel-btn').addEventListener('click', cancelFishingCaptcha);
 
+    // NBA Free Throw CAPTCHA buttons
+    document.getElementById('nba-shoot-btn').addEventListener('click', handleNBAShoot);
+    document.getElementById('nba-cancel-btn').addEventListener('click', cancelNBACaptcha);
+
     // Debug panel
     setupDebugPanel();
 
@@ -2251,6 +2574,12 @@ function setupDebugPanel() {
     document.getElementById('debug-fishing-captcha').addEventListener('click', () => {
         if (gameState.isRunning) {
             showFishingCaptcha();
+        }
+    });
+
+    document.getElementById('debug-nba-captcha').addEventListener('click', () => {
+        if (gameState.isRunning) {
+            showNBACaptcha();
         }
     });
 }

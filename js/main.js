@@ -15,6 +15,7 @@ import { showCaptcha, verifyCaptcha, cancelCaptcha } from './captcha/textCaptcha
 import { showGasPumpCaptcha, startGasPump, stopGasPump, cancelGasCaptcha } from './captcha/gasPumpCaptcha.js';
 import { showPuzzleCaptcha, generatePuzzle, updatePuzzlePiecePosition, verifyPuzzle, cancelPuzzleCaptcha } from './captcha/puzzleCaptcha.js';
 import { showFishingCaptcha, startFishingGame, stopFishingGame, startFishingAction, stopFishingAction, cancelFishingCaptcha } from './captcha/fishingCaptcha.js';
+import { showNBACaptcha, handleNBAShoot, cancelNBACaptcha } from './captcha/nbaCaptcha.js';
 
 // Export all functions to window for global access
 // Core game flow
@@ -91,6 +92,11 @@ window.stopFishingGame = stopFishingGame;
 window.startFishingAction = startFishingAction;
 window.stopFishingAction = stopFishingAction;
 window.cancelFishingCaptcha = cancelFishingCaptcha;
+
+// NBA Free Throw CAPTCHA
+window.showNBACaptcha = showNBACaptcha;
+window.handleNBAShoot = handleNBAShoot;
+window.cancelNBACaptcha = cancelNBACaptcha;
 
 // Export gameState for debugging
 window.gameState = gameState;

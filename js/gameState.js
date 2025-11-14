@@ -56,7 +56,17 @@ export const gameState = {
     fishingZoneDirection: 1, // 1 = down, -1 = up
     fishingProgress: 0, // Catch progress (0-100)
     fishingButtonHeld: false,
-    fishingActive: false
+    fishingActive: false,
+
+    // NBA Free Throw CAPTCHA state
+    nbaInterval: null,
+    nbaStage: 1, // 1 = horizontal/aim, 2 = vertical/strength
+    nbaIndicatorPosition: 50, // Current position (0-100)
+    nbaIndicatorVelocity: 3, // Speed and direction
+    nbaIndicatorDirection: 1, // 1 = forward, -1 = backward
+    nbaFirstStageResult: null, // Store result from stage 1
+    nbaActive: false,
+    nbaCenterZoneSize: 18 // Size of success zone (percent)
 };
 
 /**
@@ -93,6 +103,10 @@ export function resetGameState() {
     if (gameState.fishingInterval) {
         clearInterval(gameState.fishingInterval);
         gameState.fishingInterval = null;
+    }
+    if (gameState.nbaInterval) {
+        clearInterval(gameState.nbaInterval);
+        gameState.nbaInterval = null;
     }
 }
 

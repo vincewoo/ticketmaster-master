@@ -92,6 +92,20 @@ export function setupEventListeners() {
         if (window.cancelFishingCaptcha) window.cancelFishingCaptcha();
     });
 
+    // NBA Free Throw CAPTCHA buttons
+    document.getElementById('nba-shoot-btn').addEventListener('click', () => {
+        console.log('NBA SHOOT BUTTON CLICKED - Event listener fired');
+        if (window.handleNBAShoot) {
+            console.log('Calling handleNBAShoot');
+            window.handleNBAShoot();
+        } else {
+            console.log('ERROR: window.handleNBAShoot is not defined!');
+        }
+    });
+    document.getElementById('nba-cancel-btn').addEventListener('click', () => {
+        if (window.cancelNBACaptcha) window.cancelNBACaptcha();
+    });
+
     // Debug panel
     if (window.setupDebugPanel) {
         window.setupDebugPanel();

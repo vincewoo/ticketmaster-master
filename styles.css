@@ -647,6 +647,61 @@ body {
     image-rendering: crisp-edges;
 }
 
+/* NBA Free Throw CAPTCHA */
+.nba-game-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+#nba-canvas {
+    display: block;
+    margin: 0 auto 15px;
+    background: linear-gradient(135deg, #c9723d 0%, #d4824a 50%, #c9723d 100%);
+    border: 4px solid #8B4513;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+.nba-instruction {
+    margin: 15px 0;
+}
+
+#nba-stage-text {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #1e3c72;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.nba-help-text {
+    font-size: 0.95em;
+    color: #666;
+    font-style: italic;
+}
+
+#nba-shoot-btn {
+    font-size: 1.3em;
+    padding: 15px 40px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+#nba-shoot-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+#nba-shoot-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .fishing-progress-container {
     margin: 15px auto;
     max-width: 400px;
