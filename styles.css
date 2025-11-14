@@ -550,7 +550,6 @@ body {
     top: 85px;
     left: 0;
     transition: left 0.1s ease;
-    filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.4));
 }
 
 #puzzle-piece {
