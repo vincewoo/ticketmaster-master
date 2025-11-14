@@ -126,13 +126,25 @@
 
         <!-- Start Screen -->
         <div id="start-modal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content start-modal-content">
                 <h2>🎫 Welcome to Ticketmaster Master!</h2>
                 <p>Beat the rush and score the best deals on concert tickets!</p>
                 <div class="start-info">
                     <p><strong>Game Duration:</strong> 2 minutes</p>
                     <p><strong>Objective:</strong> Purchase tickets and maximize your savings</p>
                     <p><strong>Challenge:</strong> Prices fluctuate and seats disappear fast!</p>
+                </div>
+                <div class="start-instructions">
+                    <h3>How to Play</h3>
+                    <ul>
+                        <li>Match the target ticket count shown at top</li>
+                        <li>Seats must be adjacent in the same row</li>
+                        <li>Can't find seats? Skip target for -50 pts penalty</li>
+                        <li>Prices change constantly - grab deals fast!</li>
+                        <li>Seats randomly become available/unavailable</li>
+                        <li>Complete CAPTCHA challenges to checkout</li>
+                        <li>Only valid purchases earn points!</li>
+                    </ul>
                 </div>
                 <div class="mode-selection">
                     <button id="single-player-btn" class="btn-primary btn-large">Single Player</button>
@@ -181,8 +193,22 @@
                 </div>
             </div>
         </div>
+
+        <!-- Loading Screen Modal -->
+        <div id="loading-modal" class="modal hidden">
+            <div class="modal-content loading-content">
+                <h2>Ticketmaster Waiting Room</h2>
+                <p class="loading-status" id="loading-status">Getting you ready...</p>
+                <div class="fan-count" id="fan-count">47,823 fans in front of you</div>
+                <div class="ready-message hidden" id="ready-message">It's your turn! Get ready to buy your tickets!</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                    <div class="stick-figure" id="stick-figure">🚶‍➡️</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="game.js?v=14"></script>
+    <script src="game.js?v=21"></script>
 </body>
 </html>

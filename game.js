@@ -32,7 +32,11 @@ let gameState = {
     peer: null,
     connection: null,
     opponentScore: 0,
-    opponentCart: [] // Track opponent's cart for competition warning
+    opponentCart: [], // Track opponent's cart for competition warning
+    // Screen size synchronization
+    gridColumns: SEAT_COLS, // Default to 12 columns
+    totalSeats: TOTAL_SEATS, // Default to 96 seats
+    opponentGridConfig: null // Opponent's grid configuration
 };
 
 // Seat price tiers
@@ -43,8 +47,35 @@ const PRICE_TIERS = [
     { range: [200, 350], color: 'tier-premium' }
 ];
 
+// Get grid configuration based on screen size
+function getGridConfig() {
+    const width = window.innerWidth;
+    if (width <= 480) {
+        return { columns: 4, rows: 8, total: 32 }; // Small phones: 4x8
+    } else if (width <= 768) {
+        return { columns: 6, rows: 8, total: 48 }; // Medium phones/tablets: 6x8
+    } else {
+        return { columns: 12, rows: 8, total: 96 }; // Desktop/large tablets: 12x8
+    }
+}
+
+// Apply grid layout to seating chart
+function applyGridLayout(config) {
+    gameState.gridColumns = config.columns;
+    gameState.totalSeats = config.total;
+    const seatingChart = document.getElementById('seating-chart');
+    // Use setProperty with priority to override CSS media queries
+    seatingChart.style.setProperty('grid-template-columns', `repeat(${config.columns}, 1fr)`, 'important');
+}
+
 // Initialize game
 function initGame() {
+    // Set initial grid based on screen size (must be before generateSeats)
+    if (!gameState.isMultiplayer) {
+        const config = getGridConfig();
+        applyGridLayout(config);
+    }
+
     generateSeats();
     renderSeats();
     setupEventListeners();
@@ -52,7 +83,9 @@ function initGame() {
 
 // Generate random target ticket count
 function generateTargetTicketCount() {
-    const target = Math.floor(Math.random() * 6) + 1; // 1-6 tickets
+    // Max target is limited by grid columns (can't exceed row width)
+    const maxTarget = Math.min(gameState.gridColumns, 6);
+    const target = Math.floor(Math.random() * maxTarget) + 1; // 1 to maxTarget tickets
 
     // In multiplayer, host broadcasts the target to guest
     if (gameState.isMultiplayer && gameState.isHost) {
@@ -136,8 +169,16 @@ function generateSeats() {
     gameState.seats = [];
     const initialAvailability = [];
 
-    for (let row = 0; row < SEAT_ROWS; row++) {
-        for (let col = 0; col < SEAT_COLS; col++) {
+    // Use dynamic grid configuration
+    const cols = gameState.gridColumns;
+    const totalSeats = gameState.totalSeats;
+    const rows = Math.ceil(totalSeats / cols);
+
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const seatIndex = row * cols + col;
+            if (seatIndex >= totalSeats) break; // Don't exceed total seats
+
             const isAvailable = Math.random() > 0.3; // 70% initially available
             const seat = {
                 id: `${String.fromCharCode(65 + row)}${col + 1}`,
@@ -421,6 +462,67 @@ function updateCart() {
 
     // Only enable checkout if selection is valid
     checkoutBtn.disabled = !isValid;
+}
+
+// Show loading screen with countdown animation
+function showLoadingScreen(callback) {
+    const LOADING_DURATION = 3000; // 3 seconds
+    const UPDATE_INTERVAL = 100; // Update every 100ms for smooth animation
+
+    // Generate random fan count between 500 and 2,000 (more realistic for a 3 second wait)
+    const initialFanCount = Math.floor(Math.random() * 1500) + 500;
+
+    // Show loading modal
+    showModal('loading-modal');
+
+    // Reset elements
+    const fanCountEl = document.getElementById('fan-count');
+    const progressBar = document.getElementById('progress-bar');
+    const stickFigure = document.getElementById('stick-figure');
+    const readyMessage = document.getElementById('ready-message');
+    const loadingStatus = document.getElementById('loading-status');
+
+    fanCountEl.textContent = `${initialFanCount.toLocaleString()} fans in front of you`;
+    fanCountEl.style.display = 'block';
+    progressBar.style.width = '75%';
+    stickFigure.style.left = '25%';
+    readyMessage.classList.add('hidden');
+    loadingStatus.classList.remove('hidden');
+
+    let elapsed = 0;
+    const loadingInterval = setInterval(() => {
+        elapsed += UPDATE_INTERVAL;
+        const progress = Math.min(elapsed / LOADING_DURATION, 1); // 0 to 1
+
+        // Update progress bar (shrinks from right, starts at 75%) and stick figure position (moves right from 25% to 100%)
+        const percentage = progress * 100;
+        const remainingPercentage = 75 - (percentage * 0.75); // Shrinks from 75% to 0%
+        const stickPosition = 25 + (percentage * 0.75); // Moves from 25% to 100%
+        progressBar.style.width = `${remainingPercentage}%`;
+        stickFigure.style.left = `${stickPosition}%`;
+
+        // Update fan count (count down to 0)
+        const currentFanCount = Math.floor(initialFanCount * (1 - progress));
+        fanCountEl.textContent = `${currentFanCount.toLocaleString()} fans in front of you`;
+
+        // At 50% progress (1.5s), show ready message with flash animation
+        if (progress >= 0.5 && readyMessage.classList.contains('hidden')) {
+            // Immediately hide the fan count element completely
+            fanCountEl.style.display = 'none';
+            loadingStatus.classList.add('hidden');
+            // Show ready message without delay
+            readyMessage.classList.remove('hidden');
+        }
+
+        // When complete
+        if (elapsed >= LOADING_DURATION) {
+            clearInterval(loadingInterval);
+            setTimeout(() => {
+                hideModal('loading-modal');
+                if (callback) callback();
+            }, 200);
+        }
+    }, UPDATE_INTERVAL);
 }
 
 // Start game
@@ -1033,7 +1135,8 @@ function hideModal(modalId) {
 function initMultiplayer() {
     document.getElementById('single-player-btn').addEventListener('click', () => {
         gameState.isMultiplayer = false;
-        startGame();
+        hideModal('start-modal');
+        showLoadingScreen(startGame);
     });
 
     document.getElementById('multiplayer-btn').addEventListener('click', () => {
@@ -1081,14 +1184,15 @@ function hostGame() {
 
         // Wait for connection to be fully established before sending data
         conn.on('open', () => {
-            // Send init message to guest
+            // Send init message and grid config to guest
             conn.send({
-                type: 'init'
+                type: 'init',
+                gridConfig: getGridConfig()
             });
 
             setTimeout(() => {
                 hideModal('host-modal');
-                startGame();
+                showLoadingScreen(startGame);
             }, 1000);
         });
     });
@@ -1124,6 +1228,12 @@ function joinGame() {
 
         conn.on('open', () => {
             document.getElementById('join-status').textContent = 'Connected! Waiting for host...';
+
+            // Send grid config to host
+            conn.send({
+                type: 'screenSize',
+                gridConfig: getGridConfig()
+            });
         });
     });
 
@@ -1153,8 +1263,40 @@ function handleMultiplayerMessage(data) {
     switch (data.type) {
         case 'init':
             // Guest receives init message from host
+            gameState.opponentGridConfig = data.gridConfig;
+            // Use the smaller grid (more restrictive by total seats)
+            const guestConfig = getGridConfig();
+            const syncedConfig = guestConfig.total <= data.gridConfig.total ? guestConfig : data.gridConfig;
+            applyGridLayout(syncedConfig);
+
+            // Send back grid layout confirmation
+            sendMultiplayerMessage({
+                type: 'gridLayoutSync',
+                gridConfig: syncedConfig
+            });
+
             hideModal('join-modal');
-            startGame();
+            showLoadingScreen(startGame);
+            break;
+
+        case 'screenSize':
+            // Host receives screen size from guest
+            gameState.opponentGridConfig = data.gridConfig;
+            // Use the smaller grid (more restrictive by total seats)
+            const hostConfig = getGridConfig();
+            const finalConfig = hostConfig.total <= data.gridConfig.total ? hostConfig : data.gridConfig;
+            applyGridLayout(finalConfig);
+
+            // Confirm grid layout to guest
+            sendMultiplayerMessage({
+                type: 'gridLayoutSync',
+                gridConfig: finalConfig
+            });
+            break;
+
+        case 'gridLayoutSync':
+            // Both players receive final grid layout
+            applyGridLayout(data.gridConfig);
             break;
 
         case 'initialState':
@@ -1288,6 +1430,22 @@ function cancelJoin() {
 function setupEventListeners() {
     // Multiplayer setup
     initMultiplayer();
+
+    // Handle window resize for single-player mode
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        if (!gameState.isMultiplayer && !gameState.isRunning) {
+            // Debounce resize and only apply before game starts
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const config = getGridConfig();
+                applyGridLayout(config);
+                // Regenerate seats with new grid
+                generateSeats();
+                renderSeats();
+            }, 300);
+        }
+    });
 
     // Checkout button
     document.getElementById('checkout-btn').addEventListener('click', initiateCheckout);

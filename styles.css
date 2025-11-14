@@ -621,6 +621,10 @@ body {
 }
 
 /* Start screen */
+.start-modal-content {
+    max-width: 600px !important;
+}
+
 .start-info {
     background: #f8f9fa;
     padding: 20px;
@@ -631,6 +635,35 @@ body {
 .start-info p {
     text-align: left;
     margin-bottom: 10px;
+}
+
+.start-instructions {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.start-instructions h3 {
+    color: #856404;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.2em;
+}
+
+.start-instructions ul {
+    list-style-position: inside;
+    color: #856404;
+    font-size: 0.95em;
+    line-height: 1.8;
+    margin: 0;
+    padding: 0;
+}
+
+.start-instructions li {
+    margin-bottom: 8px;
 }
 
 /* Multiplayer styles */
@@ -708,29 +741,378 @@ body {
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
     .game-main {
         flex-direction: column;
+        padding: 20px;
+        gap: 20px;
+    }
+
+    .theater-area {
+        max-width: 100%;
     }
 
     .sidebar {
         width: 100%;
-    }
-
-    .seating-chart {
         max-width: 100%;
     }
 }
 
 @media (max-width: 768px) {
-    .seating-chart {
-        grid-template-columns: repeat(8, 1fr);
+    body {
+        padding: 10px;
+    }
+
+    #game-container {
+        border-radius: 8px;
+    }
+
+    .game-header {
+        padding: 15px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .header-left h1 {
+        font-size: 1.5em;
+    }
+
+    .event-name {
+        font-size: 0.85em;
     }
 
     .header-right {
         width: 100%;
-        justify-content: space-around;
-        margin-top: 15px;
+        justify-content: space-between;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .timer-display, .score-display, .target-display, .opponent-score-display {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .timer, .score, .target-tickets {
+        font-size: 1.4em;
+    }
+
+    .label {
+        font-size: 0.7em;
+    }
+
+    .game-main {
+        padding: 15px;
+        gap: 15px;
+    }
+
+    .stage {
+        font-size: 1.2em;
+        padding: 15px;
+    }
+
+    .seating-chart {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+    }
+
+    .seat {
+        font-size: 0.9em;
+        border-radius: 6px;
+    }
+
+    .seat-price {
+        font-size: 1em;
+        padding: 2px 5px;
+    }
+
+    .seat-label {
+        font-size: 0.8em;
+    }
+
+    .cart-container {
+        padding: 15px;
+    }
+
+    .cart-container h2 {
+        font-size: 1.3em;
+    }
+
+    .modal-content {
+        padding: 25px;
+        width: 95%;
+    }
+
+    .gameover-content {
+        max-height: 85vh;
+    }
+
+    .loading-content {
+        padding: 30px 25px !important;
+    }
+
+    .start-instructions {
+        padding: 15px;
+    }
+
+    .start-instructions h3 {
+        font-size: 1.1em;
+    }
+
+    .start-instructions ul {
+        font-size: 0.9em;
+        line-height: 1.6;
+    }
+
+    .start-instructions li {
+        margin-bottom: 6px;
+    }
+
+    /* Hide sidebar instructions on tablet */
+    .game-info {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 5px;
+    }
+
+    .game-header {
+        padding: 12px;
+    }
+
+    .header-left h1 {
+        font-size: 1.2em;
+    }
+
+    .event-name {
+        font-size: 0.75em;
+    }
+
+    .header-right {
+        gap: 8px;
+    }
+
+    .timer-display, .score-display, .target-display, .opponent-score-display {
+        min-width: 90px;
+    }
+
+    .timer, .score, .target-tickets {
+        font-size: 1.2em;
+    }
+
+    .label {
+        font-size: 0.65em;
+    }
+
+    .game-main {
+        padding: 10px;
+        gap: 12px;
+    }
+
+    .stage {
+        font-size: 1em;
+        padding: 12px;
+    }
+
+    .seating-chart {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+
+    .seat {
+        font-size: 0.85em;
+        border-radius: 5px;
+        min-height: 0;
+    }
+
+    .seat-price {
+        font-size: 0.95em;
+        padding: 2px 4px;
+    }
+
+    .seat-label {
+        font-size: 0.75em;
+        margin-top: 2px;
+    }
+
+    .cart-container {
+        padding: 12px;
+    }
+
+    .cart-container h2 {
+        font-size: 1.1em;
+        margin-bottom: 10px;
+    }
+
+    .cart-item {
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
+    .checkout-btn {
+        padding: 12px;
+        font-size: 1em;
+    }
+
+    .skip-btn {
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
+    .game-info {
+        padding: 12px;
+    }
+
+    .game-info h3 {
+        font-size: 1em;
+    }
+
+    .game-info ul {
+        font-size: 0.85em;
+    }
+
+    .modal-content {
+        padding: 20px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.3em;
+    }
+
+    .btn-large {
+        font-size: 1.1em;
+        padding: 15px 30px;
+    }
+
+    .captcha-challenge {
+        font-size: 1.8em;
+        letter-spacing: 4px;
+        padding: 20px;
+    }
+
+    .captcha-input {
+        font-size: 1em;
+        padding: 12px;
+    }
+
+    .purchase-item {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .seat-prices {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .seat-discount {
+        width: 100%;
+        text-align: left;
+    }
+
+    .loading-content {
+        padding: 25px 20px !important;
+    }
+
+    .fan-count {
+        font-size: 1.4em;
+        margin: 20px 0;
+    }
+
+    .ready-message {
+        font-size: 1.2em;
+    }
+
+    .start-instructions {
+        padding: 12px;
+    }
+
+    .start-instructions h3 {
+        font-size: 1em;
+        margin-bottom: 12px;
+    }
+
+    .start-instructions ul {
+        font-size: 0.85em;
+        line-height: 1.5;
+    }
+
+    .start-instructions li {
+        margin-bottom: 5px;
+    }
+
+    /* Hide sidebar instructions on mobile */
+    .game-info {
+        display: none;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 900px) and (orientation: landscape) {
+    .game-header {
+        padding: 10px 15px;
+    }
+
+    .header-left h1 {
+        font-size: 1.3em;
+        margin-bottom: 2px;
+    }
+
+    .event-name {
+        font-size: 0.75em;
+    }
+
+    .header-right {
+        gap: 15px;
+        margin-top: 5px;
+    }
+
+    .timer, .score, .target-tickets {
+        font-size: 1.2em;
+    }
+
+    .game-main {
+        padding: 15px;
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .theater-area {
+        flex: 1;
+    }
+
+    .sidebar {
+        width: 280px;
+        max-width: 35%;
+    }
+
+    .stage {
+        padding: 10px;
+        font-size: 1em;
+    }
+
+    .seating-chart {
+        gap: 3px;
+    }
+
+    .seat {
+        font-size: 0.55em;
+    }
+
+    .cart-container h2 {
+        font-size: 1em;
+    }
+
+    .game-info h3 {
+        font-size: 0.95em;
+    }
+
+    .game-info ul {
+        font-size: 0.8em;
     }
 }
 
@@ -760,5 +1142,77 @@ body {
     }
     50% {
         opacity: 0.85;
+    }
+}
+
+/* Loading Screen */
+.loading-content {
+    text-align: center;
+    padding: 50px 40px !important;
+}
+
+.loading-status {
+    font-size: 1.1em;
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.fan-count {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #1e3c72;
+    margin: 30px 0;
+    min-height: 50px;
+    transition: opacity 0.3s ease;
+}
+
+.progress-container {
+    position: relative;
+    width: 100%;
+    height: 40px;
+    background: #e0e0e0;
+    border-radius: 20px;
+    overflow: visible;
+    margin: 30px 0;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    width: 100%;
+    transition: width 0.1s linear;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    margin-left: auto;
+}
+
+.stick-figure {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5em;
+    transition: left 0.1s linear;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.ready-message {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #15803d;
+    margin: 0 0 30px 0;
+    min-height: 50px;
+    animation: flashMessage 0.6s ease-in-out 3;
+}
+
+@keyframes flashMessage {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(1.05);
     }
 }
