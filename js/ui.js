@@ -68,4 +68,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugLunarLanderCaptcha = document.getElementById('debug-lunar-lander-captcha');
+    if (debugLunarLanderCaptcha) {
+        debugLunarLanderCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showLunarLanderCaptcha) {
+                window.showLunarLanderCaptcha();
+            }
+        });
+    }
 }

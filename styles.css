@@ -702,6 +702,51 @@ body {
     opacity: 0.6;
 }
 
+/* Lunar Lander CAPTCHA */
+#lunar-lander-captcha-modal .modal-content {
+    max-width: 550px;
+}
+
+.lunar-lander-game-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+#lunar-lander-canvas {
+    display: block;
+    margin: 0 auto 15px;
+    background: #000;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.lunar-lander-instruction {
+    font-size: 0.95em;
+    color: #666;
+    margin: 10px 0;
+    line-height: 1.4;
+}
+
+.lunar-lander-instruction strong {
+    color: #1e3c72;
+    display: block;
+    margin-top: 5px;
+}
+
+#lunar-thrust-btn {
+    font-size: 1.3em;
+    padding: 15px 40px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+#lunar-thrust-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
 .fishing-progress-container {
     margin: 15px auto;
     max-width: 400px;

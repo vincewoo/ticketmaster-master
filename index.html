@@ -130,6 +130,7 @@
                 </div>
                 <div class="gas-pump-container">
                     <div class="gas-pump-challenge">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">🚗⛽</div>
                         <p class="gas-pump-instruction">Stop the pump at exactly <strong id="gas-target">$0.00</strong></p>
                         <div class="gas-pump-display">
                             <div class="gas-pump-screen">
@@ -232,6 +233,32 @@
                     <button id="nba-cancel-btn" class="btn-secondary">Cancel</button>
                 </div>
                 <div id="nba-captcha-error" class="captcha-error hidden"></div>
+            </div>
+        </div>
+
+        <!-- Lunar Lander CAPTCHA Modal -->
+        <div id="lunar-lander-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Land the lunar module safely to prove you're human!</p>
+                <div id="lunar-lander-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="lunar-lander-timer">15</span>s
+                </div>
+                <div class="lunar-lander-game-container">
+                    <canvas id="lunar-lander-canvas" width="400" height="400"></canvas>
+                    <div class="lunar-lander-instruction">
+                        Hold the button to fire thrusters and slow your descent!<br>
+                        <strong>Land at ≤ 4 m/s to succeed</strong>
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="lunar-thrust-btn" class="btn-primary btn-large">🔥 THRUST</button>
+                    <button class="btn-secondary cancel-captcha">Cancel</button>
+                </div>
+                <div id="lunar-lander-captcha-error" class="captcha-error hidden"></div>
             </div>
         </div>
 
@@ -371,6 +398,7 @@
                     <button id="debug-puzzle-captcha" class="debug-btn">Puzzle Slider</button>
                     <button id="debug-fishing-captcha" class="debug-btn">Fishing Game</button>
                     <button id="debug-nba-captcha" class="debug-btn">NBA Free Throw</button>
+                    <button id="debug-lunar-lander-captcha" class="debug-btn">Lunar Lander</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>

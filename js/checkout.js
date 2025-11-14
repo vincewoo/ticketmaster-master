@@ -60,18 +60,20 @@ export function initiateCheckout() {
 
     // Otherwise 60% chance of CAPTCHA
     if (hasCompetition || Math.random() < 0.6) {
-        // Randomly choose between text CAPTCHA, gas pump CAPTCHA, puzzle CAPTCHA, fishing CAPTCHA, and NBA CAPTCHA
+        // Randomly choose between all CAPTCHA types (6 total)
         const captchaType = Math.random();
-        if (captchaType < 0.2) {
+        if (captchaType < 0.167) {
             if (window.showCaptcha) window.showCaptcha();
-        } else if (captchaType < 0.4) {
+        } else if (captchaType < 0.334) {
             if (window.showGasPumpCaptcha) window.showGasPumpCaptcha();
-        } else if (captchaType < 0.6) {
+        } else if (captchaType < 0.5) {
             if (window.showPuzzleCaptcha) window.showPuzzleCaptcha();
-        } else if (captchaType < 0.8) {
+        } else if (captchaType < 0.667) {
             if (window.showFishingCaptcha) window.showFishingCaptcha();
-        } else {
+        } else if (captchaType < 0.834) {
             if (window.showNBACaptcha) window.showNBACaptcha();
+        } else {
+            if (window.showLunarLanderCaptcha) window.showLunarLanderCaptcha();
         }
     } else {
         completeCheckout();
