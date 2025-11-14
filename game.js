@@ -120,6 +120,7 @@ function generateEventTimes() {
 }
 
 // Check if seats in cart are adjacent (same row, consecutive seats)
+// For 4+ seats, allows 2 consecutive rows with touching blocks
 function areSeatsAdjacent(cartItems) {
     if (cartItems.length === 0) return false;
     if (cartItems.length === 1) return true;
@@ -138,19 +139,63 @@ function areSeatsAdjacent(cartItems) {
         rowGroups[seat.row].push(seat.col);
     });
 
-    // Check if all seats are in the same row
-    const rows = Object.keys(rowGroups);
-    if (rows.length !== 1) return false;
+    const rows = Object.keys(rowGroups).map(Number).sort((a, b) => a - b);
 
-    // Check if seats are consecutive
-    const cols = rowGroups[rows[0]].sort((a, b) => a - b);
-    for (let i = 1; i < cols.length; i++) {
-        if (cols[i] - cols[i - 1] !== 1) {
-            return false;
+    // For 1-3 seats: must be in same row
+    if (cartItems.length <= 3) {
+        if (rows.length !== 1) return false;
+
+        // Check if seats are consecutive
+        const cols = rowGroups[rows[0]].sort((a, b) => a - b);
+        for (let i = 1; i < cols.length; i++) {
+            if (cols[i] - cols[i - 1] !== 1) {
+                return false;
+            }
         }
+        return true;
     }
 
-    return true;
+    // For 4+ seats: allow 1 or 2 rows
+    if (rows.length === 1) {
+        // Single row: check consecutive
+        const cols = rowGroups[rows[0]].sort((a, b) => a - b);
+        for (let i = 1; i < cols.length; i++) {
+            if (cols[i] - cols[i - 1] !== 1) {
+                return false;
+            }
+        }
+        return true;
+    } else if (rows.length === 2) {
+        // Two rows validation
+        const row1 = rows[0];
+        const row2 = rows[1];
+
+        // Check rows are consecutive
+        if (row2 - row1 !== 1) return false;
+
+        // Check minimum 2 seats per row
+        if (rowGroups[row1].length < 2 || rowGroups[row2].length < 2) return false;
+
+        // Check each row has consecutive seats
+        const cols1 = rowGroups[row1].sort((a, b) => a - b);
+        const cols2 = rowGroups[row2].sort((a, b) => a - b);
+
+        for (let i = 1; i < cols1.length; i++) {
+            if (cols1[i] - cols1[i - 1] !== 1) return false;
+        }
+        for (let i = 1; i < cols2.length; i++) {
+            if (cols2[i] - cols2[i - 1] !== 1) return false;
+        }
+
+        // Check rows "touch" (at least one overlapping column)
+        const hasOverlap = cols1.some(col => cols2.includes(col));
+        if (!hasOverlap) return false;
+
+        return true;
+    } else {
+        // More than 2 rows not allowed
+        return false;
+    }
 }
 
 // Check if there are overlapping seats with opponent
@@ -419,7 +464,12 @@ function updateCart() {
         statusDiv.textContent = `Need ${gameState.targetTicketCount} tickets (have ${gameState.cart.length})`;
     } else if (!isAdjacent) {
         statusDiv.className += ' invalid';
-        statusDiv.textContent = '⚠️ Seats must be adjacent in same row';
+        // Dynamic message based on target ticket count
+        if (gameState.targetTicketCount <= 3) {
+            statusDiv.textContent = '⚠️ Seats must be adjacent in same row';
+        } else {
+            statusDiv.textContent = '⚠️ Seats must be adjacent (1 row) or form a touching block (2 consecutive rows, min 2/row)';
+        }
     } else {
         statusDiv.className += ' valid';
         statusDiv.textContent = '✓ Valid selection!';
