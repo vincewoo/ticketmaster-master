@@ -469,6 +469,69 @@ body {
     font-weight: bold;
 }
 
+/* Gas Pump CAPTCHA */
+.gas-pump-container {
+    margin: 20px 0;
+}
+
+.gas-pump-challenge {
+    text-align: center;
+}
+
+.gas-pump-instruction {
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.gas-pump-instruction strong {
+    color: #28a745;
+    font-size: 1.3em;
+}
+
+.gas-pump-display {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border-radius: 12px;
+    padding: 30px;
+    margin: 20px auto;
+    max-width: 400px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.gas-pump-screen {
+    background: #1a1a1a;
+    border: 4px solid #444;
+    border-radius: 8px;
+    padding: 30px 20px;
+    box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+#gas-amount {
+    font-family: 'Courier New', monospace;
+    font-size: 3.5em;
+    font-weight: bold;
+    color: #00ff41;
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+    letter-spacing: 4px;
+}
+
+.gas-attempts {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #666;
+    margin-top: 15px;
+}
+
+.gas-attempts span {
+    color: #dc3545;
+    font-size: 1.2em;
+}
+
+.btn-large {
+    font-size: 1.5em;
+    padding: 20px 40px;
+}
+
 /* Buttons */
 .btn-primary, .btn-secondary {
     flex: 1;

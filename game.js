@@ -1,6 +1,7 @@
 // Game State
 const GAME_DURATION = 120; // 2 minutes in seconds
 const CAPTCHA_DURATION = 10; // seconds to solve CAPTCHA
+const GAS_PUMP_CAPTCHA_DURATION = 20; // seconds to solve gas pump CAPTCHA (needs more time)
 const SEAT_ROWS = 8;
 const SEAT_COLS = 12;
 const TOTAL_SEATS = SEAT_ROWS * SEAT_COLS;
@@ -36,7 +37,13 @@ let gameState = {
     // Screen size synchronization
     gridColumns: SEAT_COLS, // Default to 12 columns
     totalSeats: TOTAL_SEATS, // Default to 96 seats
-    opponentGridConfig: null // Opponent's grid configuration
+    opponentGridConfig: null, // Opponent's grid configuration
+    // Gas pump CAPTCHA state
+    gasPumpInterval: null,
+    gasPumpTarget: 0,
+    gasPumpCurrent: 0,
+    gasPumpAttempts: 3,
+    gasPumpActive: false
 };
 
 // Seat price tiers
@@ -820,7 +827,12 @@ function initiateCheckout() {
 
     // Otherwise 60% chance of CAPTCHA
     if (hasCompetition || Math.random() < 0.6) {
-        showCaptcha();
+        // Randomly choose between text CAPTCHA and gas pump CAPTCHA
+        if (Math.random() < 0.5) {
+            showCaptcha();
+        } else {
+            showGasPumpCaptcha();
+        }
     } else {
         completeCheckout();
     }
@@ -908,6 +920,146 @@ function cancelCaptcha() {
     clearInterval(gameState.captchaInterval);
     hideModal('captcha-modal');
 }
+
+// ======================
+// GAS PUMP CAPTCHA
+// ======================
+
+// Show Gas Pump CAPTCHA
+function showGasPumpCaptcha() {
+    // Generate random target ($5, $10, $15, or $20)
+    const targets = [5.00, 10.00, 15.00, 20.00];
+    gameState.gasPumpTarget = targets[Math.floor(Math.random() * targets.length)];
+    gameState.gasPumpCurrent = 0;
+    gameState.gasPumpAttempts = 3;
+    gameState.gasPumpActive = false;
+
+    // Update display
+    document.getElementById('gas-target').textContent = `$${gameState.gasPumpTarget.toFixed(2)}`;
+    document.getElementById('gas-amount').textContent = `$${gameState.gasPumpCurrent.toFixed(2)}`;
+    document.getElementById('gas-attempts').textContent = gameState.gasPumpAttempts;
+    document.getElementById('gas-captcha-error').classList.add('hidden');
+    document.getElementById('gas-stop-btn').disabled = true;
+
+    // Check if opponent has overlapping seats in multiplayer
+    const warningEl = document.getElementById('gas-captcha-warning');
+    if (gameState.isMultiplayer && hasOverlappingSeats()) {
+        warningEl.classList.remove('hidden');
+    } else {
+        warningEl.classList.add('hidden');
+    }
+
+    showModal('gas-captcha-modal');
+
+    // Auto-start pump after 1 second
+    setTimeout(startGasPump, 1000);
+}
+
+// Start gas pump animation
+function startGasPump() {
+    // Reset state
+    gameState.gasPumpActive = true;
+    gameState.gasPumpCurrent = 0;
+    document.getElementById('gas-stop-btn').disabled = false;
+
+    // Clear any existing interval first
+    if (gameState.gasPumpInterval) {
+        clearInterval(gameState.gasPumpInterval);
+    }
+
+    // Increment gas amount with dynamic speed based on distance from target
+    gameState.gasPumpInterval = setInterval(() => {
+        // Calculate distance from target
+        const distanceFromTarget = Math.abs(gameState.gasPumpCurrent - gameState.gasPumpTarget);
+
+        // Dynamic speed: very fast when far, slow when close
+        let increment;
+        if (distanceFromTarget > 3.0) {
+            // Very far from target: very fast speed
+            increment = 0.10 + Math.random() * 0.10; // 0.10-0.20 (super fast)
+        } else if (distanceFromTarget > 2.0) {
+            // Far from target: fast speed
+            increment = 0.06 + Math.random() * 0.06; // 0.06-0.12
+        } else if (distanceFromTarget > 1.0) {
+            // Getting closer: moderate speed
+            increment = 0.03 + Math.random() * 0.03; // 0.03-0.06
+        } else if (distanceFromTarget > 0.5) {
+            // Close to target: slow down
+            increment = 0.02 + Math.random() * 0.01; // 0.02-0.03
+        } else {
+            // Very close to target: very slow
+            increment = 0.01 + Math.random() * 0.01; // 0.01-0.02
+        }
+
+        gameState.gasPumpCurrent += increment;
+
+        // Stop at $25 max and loop back
+        if (gameState.gasPumpCurrent >= 25) {
+            gameState.gasPumpCurrent = 0;
+        }
+
+        document.getElementById('gas-amount').textContent = `$${gameState.gasPumpCurrent.toFixed(2)}`;
+    }, 30);
+}
+
+// Stop gas pump
+function stopGasPump() {
+    if (gameState.gasPumpActive) {
+        gameState.gasPumpActive = false;
+        clearInterval(gameState.gasPumpInterval);
+        document.getElementById('gas-stop-btn').disabled = true;
+
+        // Check if player hit the target (within $0.10 tolerance)
+        const difference = Math.abs(gameState.gasPumpCurrent - gameState.gasPumpTarget);
+        const tolerance = 0.10;
+
+        if (difference <= tolerance) {
+            // Success!
+            hideModal('gas-captcha-modal');
+            completeCheckout();
+        } else {
+            // Failed attempt
+            gameState.gasPumpAttempts--;
+            document.getElementById('gas-attempts').textContent = gameState.gasPumpAttempts;
+
+            if (gameState.gasPumpAttempts <= 0) {
+                // Out of attempts - CAPTCHA failed
+                showGasCaptchaError('You must be a robot! 🤖');
+                setTimeout(() => {
+                    hideModal('gas-captcha-modal');
+                }, 2000);
+            } else {
+                // Show error and restart pump
+                const msg = difference < 1
+                    ? `Close! Off by $${difference.toFixed(2)}. Try again!`
+                    : `Missed by $${difference.toFixed(2)}. Try again!`;
+                showGasCaptchaError(msg);
+                setTimeout(() => {
+                    document.getElementById('gas-captcha-error').classList.add('hidden');
+                    startGasPump();
+                }, 1500);
+            }
+        }
+    }
+}
+
+// Show gas CAPTCHA error
+function showGasCaptchaError(message) {
+    const errorEl = document.getElementById('gas-captcha-error');
+    errorEl.textContent = message;
+    errorEl.classList.remove('hidden');
+}
+
+// Cancel gas CAPTCHA
+function cancelGasCaptcha() {
+    clearInterval(gameState.gasPumpInterval);
+    gameState.gasPumpActive = false;
+    hideModal('gas-captcha-modal');
+}
+
+// ======================
+// END GAS PUMP CAPTCHA
+// ======================
 
 // Complete checkout
 function completeCheckout() {
@@ -1513,6 +1665,10 @@ function setupEventListeners() {
             verifyCaptcha();
         }
     });
+
+    // Gas pump CAPTCHA buttons
+    document.getElementById('gas-stop-btn').addEventListener('click', stopGasPump);
+    document.getElementById('gas-cancel-btn').addEventListener('click', cancelGasCaptcha);
 
     // Play again button
     document.getElementById('play-again-btn').addEventListener('click', () => {

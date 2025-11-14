@@ -97,7 +97,7 @@
             </aside>
         </div>
 
-        <!-- CAPTCHA Modal -->
+        <!-- CAPTCHA Modal (Text) -->
         <div id="captcha-modal" class="modal hidden">
             <div class="modal-content">
                 <h2>Security Verification</h2>
@@ -117,6 +117,33 @@
                     <button id="captcha-cancel" class="btn-secondary">Cancel</button>
                 </div>
                 <div id="captcha-error" class="captcha-error hidden"></div>
+            </div>
+        </div>
+
+        <!-- Gas Pump CAPTCHA Modal -->
+        <div id="gas-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Prove you're human to continue!</p>
+                <div id="gas-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="gas-pump-container">
+                    <div class="gas-pump-challenge">
+                        <p class="gas-pump-instruction">Stop the pump at exactly <strong id="gas-target">$0.00</strong></p>
+                        <div class="gas-pump-display">
+                            <div class="gas-pump-screen">
+                                <span id="gas-amount">$0.00</span>
+                            </div>
+                        </div>
+                        <p class="gas-attempts">Attempts remaining: <span id="gas-attempts">3</span></p>
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="gas-stop-btn" class="btn-primary btn-large" disabled>STOP</button>
+                    <button id="gas-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="gas-captcha-error" class="captcha-error hidden"></div>
             </div>
         </div>
 
@@ -243,6 +270,6 @@
         </div>
     </div>
 
-    <script src="game.js?v=21"></script>
+    <script src="game.js?v=28"></script>
 </body>
 </html>
