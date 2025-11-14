@@ -17,6 +17,7 @@ import { showPuzzleCaptcha, generatePuzzle, updatePuzzlePiecePosition, verifyPuz
 import { showFishingCaptcha, startFishingGame, stopFishingGame, startFishingAction, stopFishingAction, cancelFishingCaptcha } from './captcha/fishingCaptcha.js';
 import { showNBACaptcha, handleNBAShoot, cancelNBACaptcha } from './captcha/nbaCaptcha.js';
 import { showLunarLanderCAPTCHA } from './captcha/lunarLanderCaptcha.js';
+import { showCAPTCHA as showTanksCaptcha } from './captcha/tanksCaptcha.js';
 
 // Export all functions to window for global access
 // Core game flow
@@ -101,6 +102,9 @@ window.cancelNBACaptcha = cancelNBACaptcha;
 
 // Lunar Lander CAPTCHA
 window.showLunarLanderCaptcha = showLunarLanderCAPTCHA;
+
+// Tanks CAPTCHA
+window.showTanksCaptcha = showTanksCaptcha;
 
 // Export gameState for debugging
 window.gameState = gameState;

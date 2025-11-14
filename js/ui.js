@@ -77,4 +77,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugTanksCaptcha = document.getElementById('debug-tanks-captcha');
+    if (debugTanksCaptcha) {
+        debugTanksCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showTanksCaptcha) {
+                window.showTanksCaptcha();
+            }
+        });
+    }
 }

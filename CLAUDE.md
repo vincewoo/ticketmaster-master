@@ -341,10 +341,12 @@ Each CAPTCHA type is self-contained in its own module with consistent interface:
 
 ### Common Interface Pattern
 All CAPTCHA modules export:
-- `showCAPTCHA(onSuccess, onCancel)` - Main entry point
-- Internal state management and cleanup
-- Timer management (where applicable)
-- Success/failure validation
+- `showCAPTCHA()` - Main entry point (NO parameters!)
+- Internal state management using local variables (NOT global gameState)
+- Timer management with cleanup
+- Success calls `window.completeCheckout()` directly
+- Cancel/timeout just calls `cleanup()` (hides modal, removes listeners)
+- Multiplayer warning support via `gameState.isMultiplayer` and `hasOverlappingSeats()`
 
 ### Individual CAPTCHA Mechanics
 
@@ -404,8 +406,278 @@ All CAPTCHA modules export:
 - Success/failure animations with velocity display
 - Tests resource management, timing, and physics understanding
 
+**7. Tanks CAPTCHA** (`tanksCaptcha.js`)
+- Artillery game: hit enemy tank by adjusting angle and power
+- Two tanks on mountains separated by valley
+- Randomly generated terrain with mountains and valley
+- Player controls blue tank (left), enemy is red tank (right)
+- Angle slider: 0-90 degrees
+- Power slider: 10-100%
+- Realistic projectile physics with gravity
+- Visual aim line showing trajectory direction
+- Projectile trail effect (yellow)
+- 20-second timer (longest timer)
+- Multiple attempts allowed until time runs out
+- Tests physics understanding, aiming skill, and adjustment
+
 ### CAPTCHA Selection Logic
-Random selection on checkout, weighted equally (~16.7% chance each for 6 types). Can be modified in checkout logic if certain CAPTCHAs should appear more/less frequently.
+Random selection on checkout, weighted equally (~14.3% chance each for 7 types). Can be modified in checkout logic if certain CAPTCHAs should appear more/less frequently.
+
+### HOW TO CREATE A NEW CAPTCHA (Step-by-Step Pattern)
+
+**IMPORTANT:** Follow this exact pattern when creating new CAPTCHAs to ensure consistency and avoid common errors.
+
+#### 1. Create the CAPTCHA Module File
+**Location:** `js/captcha/yourCaptcha.js`
+
+**Required Structure:**
+```javascript
+// Import dependencies
+import { gameState } from '../gameState.js';
+import { hasOverlappingSeats } from '../cartManagement.js';
+
+// Module-level state (NOT the global gameState)
+let animationId = null;
+let captchaGameState = null;  // Use a local state variable, don't reuse gameState
+
+// Constants
+const TIMER_DURATION = 15; // Adjust as needed
+
+// Main export function - NO PARAMETERS!
+export function showCAPTCHA() {
+    // Get DOM elements
+    const modal = document.getElementById('your-captcha-modal');
+    const canvas = document.getElementById('your-canvas');
+    // ... other elements
+
+    // Check for multiplayer competition warning
+    const warningEl = document.getElementById('your-captcha-warning');
+    if (gameState.isMultiplayer && hasOverlappingSeats()) {
+        warningEl.classList.remove('hidden');
+    } else {
+        warningEl.classList.add('hidden');
+    }
+
+    // Initialize local game state
+    captchaGameState = {
+        timeRemaining: TIMER_DURATION,
+        // ... other state specific to this CAPTCHA
+    };
+
+    // Set up event listeners
+    const handleAction = () => { /* ... */ };
+    const handleCancel = () => { cleanup(); };
+
+    someButton.addEventListener('click', handleAction);
+    cancelButton.addEventListener('click', handleCancel);
+
+    // Start timer
+    const timerInterval = setInterval(() => {
+        captchaGameState.timeRemaining--;
+        timerDisplay.textContent = captchaGameState.timeRemaining;
+
+        if (captchaGameState.timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            // Show failure message
+            setTimeout(() => { cleanup(); }, 2000);
+        }
+    }, 1000);
+
+    // Cleanup function
+    function cleanup() {
+        clearInterval(timerInterval);
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        // Remove ALL event listeners
+        someButton.removeEventListener('click', handleAction);
+        cancelButton.removeEventListener('click', handleCancel);
+        modal.classList.add('hidden');
+        captchaGameState = null;
+    }
+
+    // Success handler - call window.completeCheckout()
+    function handleSuccess() {
+        cleanup();
+        if (window.completeCheckout) window.completeCheckout();
+    }
+
+    // Show modal and start
+    modal.classList.remove('hidden');
+    // ... initialization code
+}
+```
+
+**KEY POINTS:**
+- ✅ Export function named `showCAPTCHA()` with **NO parameters**
+- ✅ Use local state variable (e.g., `captchaGameState`), NOT the global `gameState`
+- ✅ Import `gameState` only to check `gameState.isMultiplayer`
+- ✅ On success: call `window.completeCheckout()`, NOT a callback
+- ✅ On cancel/timeout: just call `cleanup()`, no callback needed
+- ✅ Always include multiplayer warning check
+- ✅ Clean up ALL event listeners and timers in cleanup()
+- ✅ Use `cancelAnimationFrame()` for canvas animations
+
+#### 2. Add HTML Modal
+**Location:** `index.html` (after other CAPTCHA modals, before Game Over Modal)
+
+**Required Structure:**
+```html
+<!-- Your CAPTCHA Modal -->
+<div id="your-captcha-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2>Security Verification</h2>
+        <p>Your instruction text here!</p>
+        <div id="your-captcha-warning" class="captcha-warning hidden">
+            ⚠️ Warning: Another player is competing for these seats!
+        </div>
+        <div class="captcha-timer">
+            Time: <span id="your-timer">15</span>s
+        </div>
+        <div class="your-game-container">
+            <canvas id="your-canvas" width="400" height="300"></canvas>
+            <!-- Controls and UI -->
+        </div>
+        <div class="captcha-buttons">
+            <button id="your-action-btn" class="btn-primary btn-large">ACTION</button>
+            <button id="your-cancel-btn" class="btn-secondary">Cancel</button>
+        </div>
+        <div id="your-feedback" class="captcha-error"></div>
+    </div>
+</div>
+```
+
+**KEY POINTS:**
+- ✅ Include `captcha-warning` div with ID `your-captcha-warning`
+- ✅ Include timer display: `<span id="your-timer">15</span>s`
+- ✅ Use `captcha-error` class for feedback div
+- ✅ Use `btn-primary btn-large` for main action button
+- ✅ Use `btn-secondary` for cancel button
+
+#### 3. Add CSS Styles
+**Location:** `styles.css` (after previous CAPTCHA styles)
+
+**Pattern:**
+```css
+/* Your CAPTCHA */
+#your-captcha-modal .modal-content {
+    max-width: 550px;
+}
+
+.your-game-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+#your-canvas {
+    display: block;
+    margin: 0 auto 15px;
+    background: #color;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Additional styles for controls, sliders, etc. */
+```
+
+#### 4. Register in main.js
+**Location:** `js/main.js`
+
+**Add import:**
+```javascript
+import { showCAPTCHA as showYourCaptcha } from './captcha/yourCaptcha.js';
+```
+
+**Add window export:**
+```javascript
+// Your CAPTCHA
+window.showYourCaptcha = showYourCaptcha;
+```
+
+#### 5. Add to Checkout Rotation
+**Location:** `js/checkout.js` in `initiateCheckout()` function
+
+**Update the random selection:**
+```javascript
+// Update total count in comment
+// Randomly choose between all CAPTCHA types (8 total)
+const captchaType = Math.random();
+if (captchaType < 0.125) {
+    if (window.showCaptcha) window.showCaptcha();
+} else if (captchaType < 0.25) {
+    if (window.showGasPumpCaptcha) window.showGasPumpCaptcha();
+// ... existing CAPTCHAs
+} else {
+    if (window.showYourCaptcha) window.showYourCaptcha();
+}
+```
+
+**Note:** Adjust thresholds to maintain equal distribution (1/N for N total CAPTCHAs)
+
+#### 6. Add to Debug Panel
+**Location:** `index.html` - add button to debug panel
+
+```html
+<button id="debug-your-captcha" class="debug-btn">Your CAPTCHA Name</button>
+```
+
+**Location:** `js/ui.js` in `setupDebugPanel()` function
+
+```javascript
+const debugYourCaptcha = document.getElementById('debug-your-captcha');
+if (debugYourCaptcha) {
+    debugYourCaptcha.addEventListener('click', () => {
+        if (gameState.isRunning && window.showYourCaptcha) {
+            window.showYourCaptcha();
+        }
+    });
+}
+```
+
+#### 7. Update CLAUDE.md
+Add your CAPTCHA to the "Individual CAPTCHA Mechanics" section with details about mechanics, timer, and what it tests.
+
+### Common CAPTCHA Implementation Mistakes to Avoid
+
+1. ❌ **Adding callback parameters** to `showCAPTCHA(onSuccess, onCancel)`
+   - ✅ Use `showCAPTCHA()` with no parameters
+   - ✅ Call `window.completeCheckout()` directly on success
+
+2. ❌ **Reusing the global `gameState` variable** for CAPTCHA-specific state
+   - ✅ Create a local state variable (e.g., `tanksCaptchaState`)
+   - ✅ Only import `gameState` to check `gameState.isMultiplayer`
+
+3. ❌ **Forgetting to clean up event listeners**
+   - ✅ Remove ALL event listeners in `cleanup()`
+   - ✅ Use `cancelAnimationFrame()` for RAF loops
+   - ✅ Clear all `setInterval()` and `setTimeout()`
+
+4. ❌ **Not including multiplayer warning check**
+   - ✅ Always check `gameState.isMultiplayer && hasOverlappingSeats()`
+   - ✅ Show/hide the warning element accordingly
+
+5. ❌ **Forgetting to update checkout probability thresholds**
+   - ✅ Recalculate thresholds: 1/N for N total CAPTCHAs
+   - ✅ Update the comment showing total count
+
+6. ❌ **Not testing in debug mode**
+   - ✅ Always add to debug panel
+   - ✅ Test independently before testing in full game
+
+7. ❌ **Canvas state not isolated**
+   - ✅ Each CAPTCHA should have its own local state
+   - ✅ Don't share state between different CAPTCHA types
+
+### CAPTCHA Design Principles
+
+- **Variety:** Each CAPTCHA should test different skills (reflexes, precision, timing, physics, strategy)
+- **Difficulty Balance:** Should be challenging but not frustrating (60-80% success rate ideal)
+- **Timer Length:** 10-20 seconds depending on complexity
+- **Visual Feedback:** Always show clear success/failure messages
+- **Mobile Support:** Use large buttons and touch-friendly controls
+- **Canvas Usage:** Good for physics-based or visual CAPTCHAs
+- **Frustration Factor:** Should simulate real CAPTCHA annoyance while being fun
 
 ## Multiplayer Competitive Mechanics
 

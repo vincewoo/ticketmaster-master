@@ -262,6 +262,43 @@
             </div>
         </div>
 
+        <!-- Tanks CAPTCHA Modal -->
+        <div id="tanks-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Hit the enemy tank to prove you're human!</p>
+                <div id="tanks-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="tanks-timer">20</span>s
+                </div>
+                <div class="tanks-game-container">
+                    <canvas id="tanks-canvas" width="600" height="400"></canvas>
+                    <div class="tanks-controls">
+                        <div class="tank-control-group">
+                            <label for="tank-angle">Angle: <span id="angle-value">45°</span></label>
+                            <input type="range" id="tank-angle" class="tank-slider" min="0" max="90" value="45">
+                        </div>
+                        <div class="tank-control-group">
+                            <label>Power: <span id="power-value">0%</span></label>
+                            <div class="power-gauge">
+                                <div class="power-gauge-fill" id="power-gauge-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tanks-instruction">
+                        Adjust angle, then HOLD the fire button to build power!
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="fire-tank-button" class="btn-primary btn-large">🎯 FIRE!</button>
+                    <button id="cancel-tanks-button" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="tanks-feedback" class="captcha-error"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -399,6 +436,7 @@
                     <button id="debug-fishing-captcha" class="debug-btn">Fishing Game</button>
                     <button id="debug-nba-captcha" class="debug-btn">NBA Free Throw</button>
                     <button id="debug-lunar-lander-captcha" class="debug-btn">Lunar Lander</button>
+                    <button id="debug-tanks-captcha" class="debug-btn">Tanks Artillery</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>
