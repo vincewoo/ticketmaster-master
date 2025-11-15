@@ -8,7 +8,7 @@ let animationId = null;
 let gameInterval = null;
 
 // Game state
-let altitude = 100; // meters above surface
+let altitude = 60; // meters above surface (was 100)
 let velocity = 0; // m/s (positive = falling down)
 let fuel = 100; // percentage
 let thrusting = false;
@@ -16,10 +16,11 @@ let thrusting = false;
 // Physics constants
 const GRAVITY = 1.622; // Moon gravity in m/s²
 const THRUST_ACCELERATION = 5; // Upward acceleration when thrusting m/s²
-const FUEL_BURN_RATE = 8; // Percentage per second when thrusting
-const MAX_SAFE_VELOCITY = 4; // Max landing velocity in m/s
+const FUEL_BURN_RATE = 6.5; // Percentage per second when thrusting (was 8)
+const MAX_SAFE_VELOCITY = 5; // Max landing velocity in m/s (was 4)
 const UPDATE_INTERVAL = 50; // ms (20 updates per second)
 const GAME_TIME_LIMIT = 15; // seconds
+const LANDER_LEG_HEIGHT = 3.33; // Height of landing legs in meters (20px in 60m scale)
 
 export function showLunarLanderCAPTCHA() {
     const modal = document.getElementById('lunar-lander-captcha-modal');
@@ -38,7 +39,7 @@ export function showLunarLanderCAPTCHA() {
     }
 
     // Reset game state
-    altitude = 100;
+    altitude = 60;
     velocity = 0;
     fuel = 100;
     thrusting = false;
@@ -90,17 +91,19 @@ export function showLunarLanderCAPTCHA() {
 
             if (velocity <= MAX_SAFE_VELOCITY) {
                 // Successful landing!
+                render(ctx, canvas); // Final render at landing position
                 showSuccessMessage(ctx, canvas, velocity);
                 setTimeout(() => {
                     if (window.hideModal) window.hideModal('lunar-lander-captcha-modal');
                     if (window.completeCheckout) window.completeCheckout();
-                }, 2000);
+                }, 2500);
             } else {
                 // Crashed! Show explosion animation
                 const landerX = canvas.width / 2;
                 const landerY = canvas.height - 80;
                 showExplosionAnimation(ctx, canvas, landerX, landerY, velocity);
             }
+            return; // Don't render again after game over
         }
 
         // Render frame
@@ -139,10 +142,16 @@ export function showLunarLanderCAPTCHA() {
 
     // Cleanup function
     function cleanup() {
-        clearInterval(gameInterval);
-        clearInterval(timerInterval);
+        if (gameInterval) {
+            clearInterval(gameInterval);
+            gameInterval = null;
+        }
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
         if (animationId) {
             cancelAnimationFrame(animationId);
+            animationId = null;
         }
         // Remove event listeners
         thrustButton.removeEventListener('mousedown', startThrust);
@@ -184,8 +193,12 @@ function render(ctx, canvas) {
     ctx.fillRect(padX, padY, 80, 5);
 
     // Calculate lander position (map altitude to canvas)
-    const maxAltitude = 100;
-    const landerY = height - 80 - (altitude / maxAltitude) * (height - 150);
+    // Legs extend 20px below body center, so body center should be 20px above ground when altitude=0
+    // Ground is at y=height-80, so when altitude=0, landerY should be height-100
+    const maxAltitude = 60;
+    const maxCanvasHeight = height - 150; // Total vertical space for movement
+    const groundBodyPosition = height - 100; // Where body is when feet touch ground
+    const landerY = groundBodyPosition - (altitude / maxAltitude) * maxCanvasHeight;
     const landerX = width / 2;
 
     // Draw lander
@@ -237,6 +250,8 @@ function drawLander(ctx, x, y, showThrust) {
 }
 
 function drawUI(ctx, width, height) {
+    // Reset text alignment (may be changed by success/failure messages)
+    ctx.textAlign = 'left';
     ctx.fillStyle = '#fff';
     ctx.font = '16px monospace';
 
@@ -267,13 +282,17 @@ function showSuccessMessage(ctx, canvas, velocity) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = '#4ade80';
-    ctx.font = 'bold 32px Arial';
+    ctx.font = 'bold 30px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('SAFE LANDING!', canvas.width / 2, canvas.height / 2 - 20);
+    ctx.fillText('🎉PERFECT LANDING!🎉', canvas.width / 2, canvas.height / 2 - 30);
 
     ctx.fillStyle = '#fff';
-    ctx.font = '20px Arial';
-    ctx.fillText(`Velocity: ${velocity.toFixed(1)} m/s`, canvas.width / 2, canvas.height / 2 + 20);
+    ctx.font = '22px Arial';
+    ctx.fillText(`Landing velocity: ${velocity.toFixed(1)} m/s`, canvas.width / 2, canvas.height / 2 + 10);
+
+    ctx.fillStyle = '#4ade80';
+    ctx.font = '18px Arial';
+    ctx.fillText('CAPTCHA Verified!', canvas.width / 2, canvas.height / 2 + 45);
 }
 
 function showFailureMessage(ctx, canvas, message) {

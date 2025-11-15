@@ -441,7 +441,7 @@ export function handleNBAShoot() {
             setTimeout(() => {
                 document.getElementById('nba-captcha-error').classList.add('hidden');
                 startNBAGame();
-            }, 1000);
+            }, 400);
         } else {
             // Failed stage 1
             showNBACaptchaError('✗ Missed! Try again.');
