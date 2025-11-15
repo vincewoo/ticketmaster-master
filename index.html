@@ -383,6 +383,30 @@
             </div>
         </div>
 
+        <!-- Minesweeper CAPTCHA Modal -->
+        <div id="minesweeper-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>End-game scenario: Find the last remaining mine!</p>
+                <div id="minesweeper-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="minesweeper-timer">15</span>s
+                </div>
+                <div class="minesweeper-game-container">
+                    <canvas id="minesweeper-canvas" width="300" height="300"></canvas>
+                    <div class="minesweeper-instruction">
+                        Click to find the mine (don't click safe cells!)
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="minesweeper-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="minesweeper-feedback" class="captcha-error"></div>
+            </div>
+        </div>
+
         <!-- Flappy Bird CAPTCHA Modal -->
         <div id="flappy-bird-captcha-modal" class="modal hidden">
             <div class="modal-content">
@@ -602,6 +626,7 @@
                     <button id="debug-skifree-captcha" class="debug-btn">SkiFree</button>
                     <button id="debug-pool-captcha" class="debug-btn">Pool Game</button>
                     <button id="debug-simon-captcha" class="debug-btn">Simon Says</button>
+                    <button id="debug-minesweeper-captcha" class="debug-btn">Minesweeper</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>

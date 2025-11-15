@@ -983,6 +983,42 @@ body {
     justify-content: center;
 }
 
+/* Minesweeper CAPTCHA */
+#minesweeper-captcha-modal .modal-content {
+    max-width: 450px;
+    padding: 30px;
+}
+
+.minesweeper-game-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+#minesweeper-canvas {
+    display: block;
+    margin: 0 auto 15px;
+    background: #888;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 3px solid #999;
+    cursor: pointer;
+}
+
+.minesweeper-instruction {
+    font-size: 0.9em;
+    color: #666;
+    margin: 10px 0;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+#minesweeper-feedback {
+    min-height: 24px;
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
 /* Pool CAPTCHA */
 #pool-captcha-modal .modal-content {
     max-width: 700px;

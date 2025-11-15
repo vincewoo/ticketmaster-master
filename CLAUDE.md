@@ -129,7 +129,7 @@ The game uses a single `gameState` object to track:
      - Medium red (#dc2626): 5-10% premium
      - Dark red (#b91c1c): 10%+ premium
 
-4. **CAPTCHA System** (9 Different Types):
+4. **CAPTCHA System** (14 Different Types):
    - 60% chance on checkout (100% if competing with opponent for same seats)
    - Random CAPTCHA type selected each time
    - Warning shown if opponent is competing for same seats
@@ -144,6 +144,11 @@ The game uses a single `gameState` object to track:
    - **Tanks Artillery**: Hit enemy tank by adjusting angle and power (20s timer, projectile physics)
    - **Darts Bullseye**: Steady your hand - throw dart when moving crosshair is over bullseye (15s timer, timing-based)
    - **Chess Checkmate**: Find and execute mate-in-1 puzzle (15s timer, strategy-based)
+   - **Flappy Bird**: Navigate through 3 pipes without crashing (30s timer, tap to flap)
+   - **SkiFree**: Ski downhill avoiding obstacles and trees (30s timer, arrow keys)
+   - **Pool/Billiards**: Sink the 3-ball then 8-ball in order (30s timer, aim and power)
+   - **Simon Says**: Remember and repeat the color sequence (no timer, 5 rounds)
+   - **Minesweeper**: Find the last remaining mine in end-game scenario (15s timer, logic-based)
 
 5. **Scoring**:
    - Points earned = total savings (base price - purchase price)
@@ -465,8 +470,27 @@ All CAPTCHA modules export:
 - Canvas-based rendering with clear visual feedback
 - Tests logic, strategy, and chess knowledge (unique among all CAPTCHAs - no reflex/timing required)
 
+**10. Minesweeper CAPTCHA** (`minesweeper.js`)
+- End-game scenario: player must find the last remaining mine
+- 5x5 grid (300x300px canvas) with classic minesweeper appearance
+- **Multiple mines on board:** 1 hidden mine (the target) + 2-4 revealed mines (already found)
+- Revealed mines shown with classic mine graphic (increases number complexity)
+- Revealed mines placed away from hidden mine to avoid trivial solutions
+- **Exactly 2 cells remain hidden:** the mine and one adjacent safe cell (makes it solvable)
+- Numbers show count of adjacent mines (classic minesweeper colors: blue=1, green=2, red=3, etc.)
+- Click-based interaction: must click the hidden mine to succeed
+- **Success condition:** Click on the hidden cell containing the mine
+- **Failure condition:** Click on a safe cell (shows "Wrong! You needed to find the mine, not a safe cell!")
+- Revealed cells show numbers (reflecting all nearby mines), blank spaces, or revealed mines
+- Hidden cells have classic 3D raised button appearance
+- Mine rendered as black circle with 8 radiating spikes
+- 15-second timer
+- One attempt (game over after first click)
+- Canvas-based with classic minesweeper visual style
+- Tests logic, deduction, and minesweeper knowledge (requires analyzing numbers with multiple mines present)
+
 ### CAPTCHA Selection Logic
-Random selection on checkout, weighted equally (11.1% chance each for 9 types). Can be modified in checkout logic if certain CAPTCHAs should appear more/less frequently.
+Random selection on checkout, weighted equally (7.14% chance each for 14 types). Can be modified in checkout logic if certain CAPTCHAs should appear more/less frequently.
 
 ### HOW TO CREATE A NEW CAPTCHA (Step-by-Step Pattern)
 

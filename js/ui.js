@@ -140,4 +140,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugMinesweeperCaptcha = document.getElementById('debug-minesweeper-captcha');
+    if (debugMinesweeperCaptcha) {
+        debugMinesweeperCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showMinesweeperCaptcha) {
+                window.showMinesweeperCaptcha();
+            }
+        });
+    }
 }

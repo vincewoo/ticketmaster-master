@@ -24,6 +24,7 @@ import { showCAPTCHA as showFlappyBirdCaptcha } from './captcha/flappyBirdCaptch
 import { showCAPTCHA as showSkiFreeCaptcha } from './captcha/skiFreeCaptcha.js';
 import { showCAPTCHA as showPoolCaptcha } from './captcha/poolCaptcha.js';
 import { showCAPTCHA as showSimonCaptcha } from './captcha/simonCaptcha.js';
+import { showCAPTCHA as showMinesweeperCaptcha } from './captcha/minesweeper.js';
 
 // Export all functions to window for global access
 // Core game flow
@@ -129,6 +130,9 @@ window.showPoolCaptcha = showPoolCaptcha;
 
 // Simon CAPTCHA
 window.showSimonCaptcha = showSimonCaptcha;
+
+// Minesweeper CAPTCHA
+window.showMinesweeperCaptcha = showMinesweeperCaptcha;
 
 // Export gameState for debugging
 window.gameState = gameState;
