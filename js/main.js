@@ -23,6 +23,7 @@ import { showCAPTCHA as showChessCaptcha } from './captcha/chessCaptcha.js';
 import { showCAPTCHA as showFlappyBirdCaptcha } from './captcha/flappyBirdCaptcha.js';
 import { showCAPTCHA as showSkiFreeCaptcha } from './captcha/skiFreeCaptcha.js';
 import { showCAPTCHA as showPoolCaptcha } from './captcha/poolCaptcha.js';
+import { showCAPTCHA as showSimonCaptcha } from './captcha/simonCaptcha.js';
 
 // Export all functions to window for global access
 // Core game flow
@@ -125,6 +126,9 @@ window.showSkiFreeCaptcha = showSkiFreeCaptcha;
 
 // Pool CAPTCHA
 window.showPoolCaptcha = showPoolCaptcha;
+
+// Simon CAPTCHA
+window.showSimonCaptcha = showSimonCaptcha;
 
 // Export gameState for debugging
 window.gameState = gameState;

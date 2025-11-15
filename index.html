@@ -430,6 +430,34 @@
             </div>
         </div>
 
+        <!-- Simon CAPTCHA Modal -->
+        <div id="simon-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Repeat the color pattern to prove you're human!</p>
+                <div id="simon-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div id="simon-level" class="simon-level">Ready</div>
+                <div class="simon-game-container">
+                    <div class="simon-board">
+                        <button id="simon-red" class="simon-button simon-red"></button>
+                        <button id="simon-green" class="simon-button simon-green"></button>
+                        <button id="simon-yellow" class="simon-button simon-yellow"></button>
+                        <button id="simon-blue" class="simon-button simon-blue"></button>
+                        <div class="simon-center">
+                            <div class="simon-logo">SIMON</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="simon-start-btn" class="btn-primary btn-large">START</button>
+                    <button id="simon-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="simon-feedback" class="captcha-error"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -573,6 +601,7 @@
                     <button id="debug-flappy-bird-captcha" class="debug-btn">Flappy Bird</button>
                     <button id="debug-skifree-captcha" class="debug-btn">SkiFree</button>
                     <button id="debug-pool-captcha" class="debug-btn">Pool Game</button>
+                    <button id="debug-simon-captcha" class="debug-btn">Simon Says</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>

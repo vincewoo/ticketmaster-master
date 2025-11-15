@@ -60,32 +60,34 @@ export function initiateCheckout() {
 
     // Otherwise 60% chance of CAPTCHA
     if (hasCompetition || Math.random() < 0.6) {
-        // Randomly choose between all CAPTCHA types (12 total)
+        // Randomly choose between all CAPTCHA types (13 total)
         const captchaType = Math.random();
-        if (captchaType < 0.0833) {
+        if (captchaType < 0.0769) {
             if (window.showCaptcha) window.showCaptcha();
-        } else if (captchaType < 0.1667) {
+        } else if (captchaType < 0.1538) {
             if (window.showGasPumpCaptcha) window.showGasPumpCaptcha();
-        } else if (captchaType < 0.2500) {
+        } else if (captchaType < 0.2308) {
             if (window.showPuzzleCaptcha) window.showPuzzleCaptcha();
-        } else if (captchaType < 0.3333) {
+        } else if (captchaType < 0.3077) {
             if (window.showFishingCaptcha) window.showFishingCaptcha();
-        } else if (captchaType < 0.4167) {
+        } else if (captchaType < 0.3846) {
             if (window.showNBACaptcha) window.showNBACaptcha();
-        } else if (captchaType < 0.5000) {
+        } else if (captchaType < 0.4615) {
             if (window.showLunarLanderCaptcha) window.showLunarLanderCaptcha();
-        } else if (captchaType < 0.5833) {
+        } else if (captchaType < 0.5385) {
             if (window.showTanksCaptcha) window.showTanksCaptcha();
-        } else if (captchaType < 0.6667) {
+        } else if (captchaType < 0.6154) {
             if (window.showDartsCaptcha) window.showDartsCaptcha();
-        } else if (captchaType < 0.7500) {
+        } else if (captchaType < 0.6923) {
             if (window.showChessCaptcha) window.showChessCaptcha();
-        } else if (captchaType < 0.8333) {
+        } else if (captchaType < 0.7692) {
             if (window.showFlappyBirdCaptcha) window.showFlappyBirdCaptcha();
-        } else if (captchaType < 0.9167) {
+        } else if (captchaType < 0.8462) {
             if (window.showSkiFreeCaptcha) window.showSkiFreeCaptcha();
-        } else {
+        } else if (captchaType < 0.9231) {
             if (window.showPoolCaptcha) window.showPoolCaptcha();
+        } else {
+            if (window.showSimonCaptcha) window.showSimonCaptcha();
         }
     } else {
         completeCheckout();

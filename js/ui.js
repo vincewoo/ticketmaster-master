@@ -131,4 +131,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugSimonCaptcha = document.getElementById('debug-simon-captcha');
+    if (debugSimonCaptcha) {
+        debugSimonCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showSimonCaptcha) {
+                window.showSimonCaptcha();
+            }
+        });
+    }
 }
