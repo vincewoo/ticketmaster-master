@@ -122,4 +122,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugPoolCaptcha = document.getElementById('debug-pool-captcha');
+    if (debugPoolCaptcha) {
+        debugPoolCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showPoolCaptcha) {
+                window.showPoolCaptcha();
+            }
+        });
+    }
 }

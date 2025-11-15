@@ -353,6 +353,36 @@
             </div>
         </div>
 
+        <!-- Pool CAPTCHA Modal -->
+        <div id="pool-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Sink both balls to prove you're human! Click and drag to aim, hold to charge power.</p>
+                <div id="pool-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="pool-timer">30</span>s
+                </div>
+                <div id="pool-status" class="pool-status">
+                    Sink the 3-ball first
+                </div>
+                <div class="pool-game-container">
+                    <canvas id="pool-canvas" width="600" height="400"></canvas>
+                    <div id="pool-power-bar" class="pool-power-bar">
+                        <div class="pool-power-label">Shot Power</div>
+                        <div class="pool-power-bar-bg">
+                            <div id="pool-power-fill" class="pool-power-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="pool-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="pool-feedback" class="captcha-error"></div>
+            </div>
+        </div>
+
         <!-- Flappy Bird CAPTCHA Modal -->
         <div id="flappy-bird-captcha-modal" class="modal hidden">
             <div class="modal-content">
@@ -542,6 +572,7 @@
                     <button id="debug-chess-captcha" class="debug-btn">Chess Checkmate</button>
                     <button id="debug-flappy-bird-captcha" class="debug-btn">Flappy Bird</button>
                     <button id="debug-skifree-captcha" class="debug-btn">SkiFree</button>
+                    <button id="debug-pool-captcha" class="debug-btn">Pool Game</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>

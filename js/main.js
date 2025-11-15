@@ -22,6 +22,7 @@ import { showCAPTCHA as showDartsCaptcha } from './captcha/dartsCaptcha.js';
 import { showCAPTCHA as showChessCaptcha } from './captcha/chessCaptcha.js';
 import { showCAPTCHA as showFlappyBirdCaptcha } from './captcha/flappyBirdCaptcha.js';
 import { showCAPTCHA as showSkiFreeCaptcha } from './captcha/skiFreeCaptcha.js';
+import { showCAPTCHA as showPoolCaptcha } from './captcha/poolCaptcha.js';
 
 // Export all functions to window for global access
 // Core game flow
@@ -121,6 +122,9 @@ window.showFlappyBirdCaptcha = showFlappyBirdCaptcha;
 
 // SkiFree CAPTCHA
 window.showSkiFreeCaptcha = showSkiFreeCaptcha;
+
+// Pool CAPTCHA
+window.showPoolCaptcha = showPoolCaptcha;
 
 // Export gameState for debugging
 window.gameState = gameState;

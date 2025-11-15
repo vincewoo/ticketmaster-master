@@ -60,30 +60,32 @@ export function initiateCheckout() {
 
     // Otherwise 60% chance of CAPTCHA
     if (hasCompetition || Math.random() < 0.6) {
-        // Randomly choose between all CAPTCHA types (11 total)
+        // Randomly choose between all CAPTCHA types (12 total)
         const captchaType = Math.random();
-        if (captchaType < 0.0909) {
+        if (captchaType < 0.0833) {
             if (window.showCaptcha) window.showCaptcha();
-        } else if (captchaType < 0.1818) {
+        } else if (captchaType < 0.1667) {
             if (window.showGasPumpCaptcha) window.showGasPumpCaptcha();
-        } else if (captchaType < 0.2727) {
+        } else if (captchaType < 0.2500) {
             if (window.showPuzzleCaptcha) window.showPuzzleCaptcha();
-        } else if (captchaType < 0.3636) {
+        } else if (captchaType < 0.3333) {
             if (window.showFishingCaptcha) window.showFishingCaptcha();
-        } else if (captchaType < 0.4545) {
+        } else if (captchaType < 0.4167) {
             if (window.showNBACaptcha) window.showNBACaptcha();
-        } else if (captchaType < 0.5454) {
+        } else if (captchaType < 0.5000) {
             if (window.showLunarLanderCaptcha) window.showLunarLanderCaptcha();
-        } else if (captchaType < 0.6363) {
+        } else if (captchaType < 0.5833) {
             if (window.showTanksCaptcha) window.showTanksCaptcha();
-        } else if (captchaType < 0.7272) {
+        } else if (captchaType < 0.6667) {
             if (window.showDartsCaptcha) window.showDartsCaptcha();
-        } else if (captchaType < 0.8181) {
+        } else if (captchaType < 0.7500) {
             if (window.showChessCaptcha) window.showChessCaptcha();
-        } else if (captchaType < 0.9090) {
+        } else if (captchaType < 0.8333) {
             if (window.showFlappyBirdCaptcha) window.showFlappyBirdCaptcha();
-        } else {
+        } else if (captchaType < 0.9167) {
             if (window.showSkiFreeCaptcha) window.showSkiFreeCaptcha();
+        } else {
+            if (window.showPoolCaptcha) window.showPoolCaptcha();
         }
     } else {
         completeCheckout();
