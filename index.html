@@ -245,17 +245,21 @@
                     ⚠️ Warning: Another player is competing for these seats!
                 </div>
                 <div class="captcha-timer">
-                    Time: <span id="lunar-lander-timer">15</span>s
+                    Time: <span id="lunar-lander-timer">30</span>s
                 </div>
                 <div class="lunar-lander-game-container">
                     <canvas id="lunar-lander-canvas" width="400" height="400"></canvas>
                     <div class="lunar-lander-instruction">
-                        Hold the button to fire thrusters and slow your descent!<br>
-                        <strong>Land at ≤ 4 m/s to succeed</strong>
+                        Rotate and thrust to land on the green pad!<br>
+                        <strong>Land upright at ≤ 5 m/s to succeed</strong>
                     </div>
                 </div>
+                <div class="lunar-lander-controls">
+                    <button id="lunar-rotate-left-btn" class="btn-primary lunar-rotate-btn">⟲ ROTATE LEFT</button>
+                    <button id="lunar-thrust-btn" class="btn-primary btn-large lunar-thrust-btn">🔥 THRUST</button>
+                    <button id="lunar-rotate-right-btn" class="btn-primary lunar-rotate-btn">⟳ ROTATE RIGHT</button>
+                </div>
                 <div class="captcha-buttons">
-                    <button id="lunar-thrust-btn" class="btn-primary btn-large">🔥 THRUST</button>
                     <button class="btn-secondary cancel-captcha">Cancel</button>
                 </div>
                 <div id="lunar-lander-captcha-error" class="captcha-error hidden"></div>

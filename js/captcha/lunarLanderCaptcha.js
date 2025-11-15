@@ -10,23 +10,34 @@ let gameInterval = null;
 // Game state
 let altitude = 60; // meters above surface (was 100)
 let velocity = 0; // m/s (positive = falling down)
+let horizontalVelocity = 0; // m/s (positive = moving right)
+let horizontalPosition = 0; // meters from center (negative = left, positive = right)
+let angle = 0; // radians (0 = upright, positive = clockwise rotation)
 let fuel = 100; // percentage
 let thrusting = false;
+let rotatingLeft = false;
+let rotatingRight = false;
+let padX = 0; // Landing pad x-position (will be randomized)
 
 // Physics constants
-const GRAVITY = 1.622; // Moon gravity in m/s²
-const THRUST_ACCELERATION = 5; // Upward acceleration when thrusting m/s²
-const FUEL_BURN_RATE = 6.5; // Percentage per second when thrusting (was 8)
+const GRAVITY = 3.0; // Moon gravity in m/s² (increased from 1.622 for faster, more challenging gameplay)
+const THRUST_ACCELERATION = 6; // Acceleration when thrusting m/s² (increased to compensate for higher gravity)
+const ROTATION_SPEED = 2.5; // Radians per second (increased for more responsive controls)
+const FUEL_BURN_RATE = 5.5; // Percentage per second when thrusting (reduced to give more fuel for longer game)
 const MAX_SAFE_VELOCITY = 5; // Max landing velocity in m/s (was 4)
 const UPDATE_INTERVAL = 50; // ms (20 updates per second)
-const GAME_TIME_LIMIT = 15; // seconds
+const GAME_TIME_LIMIT = 20; // seconds (increased from 15 for added complexity and horizontal navigation)
 const LANDER_LEG_HEIGHT = 3.33; // Height of landing legs in meters (20px in 60m scale)
+const MAX_HORIZONTAL_POSITION = 80; // meters from center (canvas boundaries)
+const LANDING_PAD_WIDTH = 35; // meters (width of landing pad - wide enough for lander legs at ~40px spacing)
 
 export function showLunarLanderCAPTCHA() {
     const modal = document.getElementById('lunar-lander-captcha-modal');
     const canvas = document.getElementById('lunar-lander-canvas');
     const ctx = canvas.getContext('2d');
     const thrustButton = document.getElementById('lunar-thrust-btn');
+    const rotateLeftButton = document.getElementById('lunar-rotate-left-btn');
+    const rotateRightButton = document.getElementById('lunar-rotate-right-btn');
     const timerDisplay = document.getElementById('lunar-lander-timer');
     const cancelButton = document.querySelector('#lunar-lander-captcha-modal .cancel-captcha');
     const warningDiv = document.getElementById('lunar-lander-captcha-warning');
@@ -41,12 +52,23 @@ export function showLunarLanderCAPTCHA() {
     // Reset game state
     altitude = 60;
     velocity = 0;
+    horizontalVelocity = 0;
+    horizontalPosition = 0;
+    angle = 0;
     fuel = 100;
     thrusting = false;
+    rotatingLeft = false;
+    rotatingRight = false;
     let timeRemaining = GAME_TIME_LIMIT;
     let gameOver = false;
 
+    // Randomize landing pad position (-60 to +60 meters from center)
+    padX = (Math.random() - 0.5) * 120;
+
     if (window.showModal) window.showModal('lunar-lander-captcha-modal');
+
+    // Set initial timer display
+    timerDisplay.textContent = timeRemaining;
 
     // Timer countdown
     const timerInterval = setInterval(() => {
@@ -69,18 +91,50 @@ export function showLunarLanderCAPTCHA() {
 
         const deltaTime = UPDATE_INTERVAL / 1000; // Convert to seconds
 
+        // Apply rotation
+        if (rotatingLeft && fuel > 0) {
+            angle -= ROTATION_SPEED * deltaTime;
+            fuel -= FUEL_BURN_RATE * deltaTime * 0.3; // Rotation uses less fuel
+            if (fuel < 0) fuel = 0;
+        }
+        if (rotatingRight && fuel > 0) {
+            angle += ROTATION_SPEED * deltaTime;
+            fuel -= FUEL_BURN_RATE * deltaTime * 0.3; // Rotation uses less fuel
+            if (fuel < 0) fuel = 0;
+        }
+
         // Apply gravity (increases velocity downward)
         velocity += GRAVITY * deltaTime;
 
         // Apply thrust if button pressed and fuel available
         if (thrusting && fuel > 0) {
-            velocity -= THRUST_ACCELERATION * deltaTime;
+            // Thrust direction based on angle
+            const thrustY = Math.cos(angle) * THRUST_ACCELERATION * deltaTime;
+            const thrustX = Math.sin(angle) * THRUST_ACCELERATION * deltaTime;
+
+            velocity -= thrustY; // Upward component
+            horizontalVelocity += thrustX; // Horizontal component
+
             fuel -= FUEL_BURN_RATE * deltaTime;
             if (fuel < 0) fuel = 0;
         }
 
-        // Update altitude
+        // Update altitude and horizontal position
         altitude -= velocity * deltaTime;
+        horizontalPosition += horizontalVelocity * deltaTime;
+
+        // Horizontal drag (atmospheric friction)
+        horizontalVelocity *= 0.98;
+
+        // Boundary checks - bounce off edges
+        if (horizontalPosition < -MAX_HORIZONTAL_POSITION) {
+            horizontalPosition = -MAX_HORIZONTAL_POSITION;
+            horizontalVelocity *= -0.3; // Bounce with energy loss
+        }
+        if (horizontalPosition > MAX_HORIZONTAL_POSITION) {
+            horizontalPosition = MAX_HORIZONTAL_POSITION;
+            horizontalVelocity *= -0.3; // Bounce with energy loss
+        }
 
         // Check for landing or crash
         if (altitude <= 0) {
@@ -89,19 +143,36 @@ export function showLunarLanderCAPTCHA() {
 
             cleanup();
 
-            if (velocity <= MAX_SAFE_VELOCITY) {
+            // Check if landed on pad (within pad bounds horizontally)
+            const distanceFromPad = Math.abs(horizontalPosition - padX);
+            const onPad = distanceFromPad <= LANDING_PAD_WIDTH / 2;
+
+            // Calculate total landing velocity (magnitude of velocity vector)
+            const totalVelocity = Math.sqrt(velocity * velocity + horizontalVelocity * horizontalVelocity);
+
+            // Check if angle is roughly upright (within 30 degrees)
+            const uprightAngle = Math.abs(angle) < Math.PI / 6;
+
+            if (onPad && totalVelocity <= MAX_SAFE_VELOCITY && uprightAngle) {
                 // Successful landing!
                 render(ctx, canvas); // Final render at landing position
-                showSuccessMessage(ctx, canvas, velocity);
+                showSuccessMessage(ctx, canvas, totalVelocity);
                 setTimeout(() => {
                     if (window.hideModal) window.hideModal('lunar-lander-captcha-modal');
                     if (window.completeCheckout) window.completeCheckout();
                 }, 2500);
             } else {
                 // Crashed! Show explosion animation
-                const landerX = canvas.width / 2;
-                const landerY = canvas.height - 80;
-                showExplosionAnimation(ctx, canvas, landerX, landerY, velocity);
+                const groundBodyPosition = canvas.height - 100;
+                const landerCanvasX = canvas.width / 2 + (horizontalPosition / MAX_HORIZONTAL_POSITION) * (canvas.width / 2 - 50);
+                const landerCanvasY = groundBodyPosition;
+
+                let crashReason = '';
+                if (!onPad) crashReason = 'MISSED PAD';
+                else if (!uprightAngle) crashReason = 'BAD ANGLE';
+                else crashReason = 'TOO FAST';
+
+                showExplosionAnimation(ctx, canvas, landerCanvasX, landerCanvasY, totalVelocity, crashReason);
             }
             return; // Don't render again after game over
         }
@@ -133,6 +204,51 @@ export function showLunarLanderCAPTCHA() {
         stopThrust();
     });
 
+    // Rotation button controls
+    const startRotateLeft = () => {
+        if (!gameOver && fuel > 0) {
+            rotatingLeft = true;
+        }
+    };
+
+    const stopRotateLeft = () => {
+        rotatingLeft = false;
+    };
+
+    const startRotateRight = () => {
+        if (!gameOver && fuel > 0) {
+            rotatingRight = true;
+        }
+    };
+
+    const stopRotateRight = () => {
+        rotatingRight = false;
+    };
+
+    rotateLeftButton.addEventListener('mousedown', startRotateLeft);
+    rotateLeftButton.addEventListener('mouseup', stopRotateLeft);
+    rotateLeftButton.addEventListener('mouseleave', stopRotateLeft);
+    rotateLeftButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startRotateLeft();
+    });
+    rotateLeftButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        stopRotateLeft();
+    });
+
+    rotateRightButton.addEventListener('mousedown', startRotateRight);
+    rotateRightButton.addEventListener('mouseup', stopRotateRight);
+    rotateRightButton.addEventListener('mouseleave', stopRotateRight);
+    rotateRightButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startRotateRight();
+    });
+    rotateRightButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        stopRotateRight();
+    });
+
     // Cancel button
     const handleCancel = () => {
         cleanup();
@@ -159,6 +275,16 @@ export function showLunarLanderCAPTCHA() {
         thrustButton.removeEventListener('mouseleave', stopThrust);
         thrustButton.removeEventListener('touchstart', startThrust);
         thrustButton.removeEventListener('touchend', stopThrust);
+        rotateLeftButton.removeEventListener('mousedown', startRotateLeft);
+        rotateLeftButton.removeEventListener('mouseup', stopRotateLeft);
+        rotateLeftButton.removeEventListener('mouseleave', stopRotateLeft);
+        rotateLeftButton.removeEventListener('touchstart', startRotateLeft);
+        rotateLeftButton.removeEventListener('touchend', stopRotateLeft);
+        rotateRightButton.removeEventListener('mousedown', startRotateRight);
+        rotateRightButton.removeEventListener('mouseup', stopRotateRight);
+        rotateRightButton.removeEventListener('mouseleave', stopRotateRight);
+        rotateRightButton.removeEventListener('touchstart', startRotateRight);
+        rotateRightButton.removeEventListener('touchend', stopRotateRight);
         cancelButton.removeEventListener('click', handleCancel);
     }
 
@@ -186,35 +312,40 @@ function render(ctx, canvas) {
     ctx.fillStyle = '#888';
     ctx.fillRect(0, height - 80, width, 80);
 
-    // Draw landing pad
-    const padX = width / 2 - 40;
+    // Draw landing pad (convert padX from game meters to canvas pixels)
+    const padCanvasX = width / 2 + (padX / MAX_HORIZONTAL_POSITION) * (width / 2 - 50);
+    const padCanvasWidth = (LANDING_PAD_WIDTH / MAX_HORIZONTAL_POSITION) * (width / 2 - 50);
     const padY = height - 80;
     ctx.fillStyle = '#4ade80';
-    ctx.fillRect(padX, padY, 80, 5);
+    ctx.fillRect(padCanvasX - padCanvasWidth / 2, padY, padCanvasWidth, 5);
 
-    // Calculate lander position (map altitude to canvas)
+    // Calculate lander position (map altitude and horizontal position to canvas)
     // Legs extend 20px below body center, so body center should be 20px above ground when altitude=0
     // Ground is at y=height-80, so when altitude=0, landerY should be height-100
     const maxAltitude = 60;
     const maxCanvasHeight = height - 150; // Total vertical space for movement
     const groundBodyPosition = height - 100; // Where body is when feet touch ground
     const landerY = groundBodyPosition - (altitude / maxAltitude) * maxCanvasHeight;
-    const landerX = width / 2;
+    const landerX = width / 2 + (horizontalPosition / MAX_HORIZONTAL_POSITION) * (width / 2 - 50);
 
     // Draw lander
-    drawLander(ctx, landerX, landerY, thrusting);
+    drawLander(ctx, landerX, landerY, thrusting, angle);
 
     // Draw UI elements
     drawUI(ctx, width, height);
 }
 
-function drawLander(ctx, x, y, showThrust) {
+function drawLander(ctx, x, y, showThrust, rotation) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+
     // Lander body (simple triangular shape)
     ctx.fillStyle = '#ddd';
     ctx.beginPath();
-    ctx.moveTo(x, y - 20); // Top point
-    ctx.lineTo(x - 15, y + 10); // Bottom left
-    ctx.lineTo(x + 15, y + 10); // Bottom right
+    ctx.moveTo(0, -20); // Top point
+    ctx.lineTo(-15, 10); // Bottom left
+    ctx.lineTo(15, 10); // Bottom right
     ctx.closePath();
     ctx.fill();
 
@@ -222,31 +353,33 @@ function drawLander(ctx, x, y, showThrust) {
     ctx.strokeStyle = '#aaa';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(x - 10, y + 5);
-    ctx.lineTo(x - 20, y + 20);
-    ctx.moveTo(x + 10, y + 5);
-    ctx.lineTo(x + 20, y + 20);
+    ctx.moveTo(-10, 5);
+    ctx.lineTo(-20, 20);
+    ctx.moveTo(10, 5);
+    ctx.lineTo(20, 20);
     ctx.stroke();
 
-    // Thrust flame
+    // Thrust flame (points downward in lander's reference frame)
     if (showThrust && fuel > 0) {
         ctx.fillStyle = '#ff6b00';
         ctx.beginPath();
-        ctx.moveTo(x - 8, y + 10);
-        ctx.lineTo(x, y + 25);
-        ctx.lineTo(x + 8, y + 10);
+        ctx.moveTo(-8, 10);
+        ctx.lineTo(0, 25);
+        ctx.lineTo(8, 10);
         ctx.closePath();
         ctx.fill();
 
         // Inner flame
         ctx.fillStyle = '#ffff00';
         ctx.beginPath();
-        ctx.moveTo(x - 5, y + 10);
-        ctx.lineTo(x, y + 20);
-        ctx.lineTo(x + 5, y + 10);
+        ctx.moveTo(-5, 10);
+        ctx.lineTo(0, 20);
+        ctx.lineTo(5, 10);
         ctx.closePath();
         ctx.fill();
     }
+
+    ctx.restore();
 }
 
 function drawUI(ctx, width, height) {
@@ -305,7 +438,7 @@ function showFailureMessage(ctx, canvas, message) {
     ctx.fillText(message, canvas.width / 2, canvas.height / 2);
 }
 
-function showExplosionAnimation(ctx, canvas, x, y, crashVelocity) {
+function showExplosionAnimation(ctx, canvas, x, y, crashVelocity, crashReason) {
     // Create debris particles
     const debrisParticles = [];
     const numParticles = 15;
@@ -444,7 +577,7 @@ function showExplosionAnimation(ctx, canvas, x, y, crashVelocity) {
             animationId = requestAnimationFrame(animateExplosion);
         } else {
             // Show crash message after explosion
-            showFailureMessage(ctx, canvas, `CRASHED! (${crashVelocity.toFixed(1)} m/s)`);
+            showFailureMessage(ctx, canvas, `${crashReason}! (${crashVelocity.toFixed(1)} m/s)`);
             setTimeout(() => {
                 if (window.hideModal) window.hideModal('lunar-lander-captcha-modal');
             }, 2000);

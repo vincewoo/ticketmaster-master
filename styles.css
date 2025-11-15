@@ -733,6 +733,40 @@ body {
     margin-top: 5px;
 }
 
+.lunar-lander-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.lunar-rotate-btn {
+    padding: 15px 20px;
+    font-size: 0.9em;
+    min-width: 120px;
+}
+
+.lunar-thrust-btn {
+    padding: 20px 30px;
+    font-size: 1.1em;
+    min-width: 140px;
+}
+
+/* Mobile layout for lunar lander controls */
+@media (max-width: 600px) {
+    .lunar-lander-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .lunar-rotate-btn,
+    .lunar-thrust-btn {
+        width: 100%;
+        min-width: unset;
+    }
+}
+
 #lunar-thrust-btn {
     font-size: 1.3em;
     padding: 15px 40px;
