@@ -353,6 +353,31 @@
             </div>
         </div>
 
+        <!-- Flappy Bird CAPTCHA Modal -->
+        <div id="flappy-bird-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Navigate through the pipes to prove you're human!</p>
+                <div id="flappy-bird-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="flappy-bird-timer">30</span>s
+                </div>
+                <div class="flappy-bird-score-display">
+                    Score: <span id="flappy-bird-score">0</span> / 3
+                </div>
+                <div class="flappy-bird-game-container">
+                    <canvas id="flappy-bird-canvas" width="400" height="500"></canvas>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="flappy-bird-flap-btn" class="btn-primary btn-large">🐦 FLAP!</button>
+                    <button id="flappy-bird-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="flappy-bird-feedback" class="captcha-error"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -493,6 +518,7 @@
                     <button id="debug-tanks-captcha" class="debug-btn">Tanks Artillery</button>
                     <button id="debug-darts-captcha" class="debug-btn">Darts Bullseye</button>
                     <button id="debug-chess-captcha" class="debug-btn">Chess Checkmate</button>
+                    <button id="debug-flappy-bird-captcha" class="debug-btn">Flappy Bird</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>

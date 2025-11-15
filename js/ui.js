@@ -104,4 +104,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugFlappyBirdCaptcha = document.getElementById('debug-flappy-bird-captcha');
+    if (debugFlappyBirdCaptcha) {
+        debugFlappyBirdCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showFlappyBirdCaptcha) {
+                window.showFlappyBirdCaptcha();
+            }
+        });
+    }
 }

@@ -983,6 +983,42 @@ body {
     justify-content: center;
 }
 
+/* Flappy Bird CAPTCHA */
+#flappy-bird-captcha-modal .modal-content {
+    max-width: 500px;
+    padding: 30px;
+}
+
+.flappy-bird-game-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+#flappy-bird-canvas {
+    display: block;
+    margin: 0 auto;
+    background: #87CEEB;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 3px solid #5a9fd4;
+    cursor: pointer;
+}
+
+.flappy-bird-score-display {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin: 10px 0;
+    text-align: center;
+}
+
+#flappy-bird-feedback {
+    min-height: 24px;
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
 #reset-chess-button,
 #cancel-chess-button {
     flex: 1;

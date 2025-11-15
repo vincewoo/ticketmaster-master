@@ -20,6 +20,7 @@ import { showLunarLanderCAPTCHA } from './captcha/lunarLanderCaptcha.js';
 import { showCAPTCHA as showTanksCaptcha } from './captcha/tanksCaptcha.js';
 import { showCAPTCHA as showDartsCaptcha } from './captcha/dartsCaptcha.js';
 import { showCAPTCHA as showChessCaptcha } from './captcha/chessCaptcha.js';
+import { showCAPTCHA as showFlappyBirdCaptcha } from './captcha/flappyBirdCaptcha.js';
 
 // Export all functions to window for global access
 // Core game flow
@@ -113,6 +114,9 @@ window.showDartsCaptcha = showDartsCaptcha;
 
 // Chess CAPTCHA
 window.showChessCaptcha = showChessCaptcha;
+
+// Flappy Bird CAPTCHA
+window.showFlappyBirdCaptcha = showFlappyBirdCaptcha;
 
 // Export gameState for debugging
 window.gameState = gameState;

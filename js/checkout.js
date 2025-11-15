@@ -60,26 +60,28 @@ export function initiateCheckout() {
 
     // Otherwise 60% chance of CAPTCHA
     if (hasCompetition || Math.random() < 0.6) {
-        // Randomly choose between all CAPTCHA types (9 total)
+        // Randomly choose between all CAPTCHA types (10 total)
         const captchaType = Math.random();
-        if (captchaType < 0.111) {
+        if (captchaType < 0.1) {
             if (window.showCaptcha) window.showCaptcha();
-        } else if (captchaType < 0.222) {
+        } else if (captchaType < 0.2) {
             if (window.showGasPumpCaptcha) window.showGasPumpCaptcha();
-        } else if (captchaType < 0.333) {
+        } else if (captchaType < 0.3) {
             if (window.showPuzzleCaptcha) window.showPuzzleCaptcha();
-        } else if (captchaType < 0.444) {
+        } else if (captchaType < 0.4) {
             if (window.showFishingCaptcha) window.showFishingCaptcha();
-        } else if (captchaType < 0.555) {
+        } else if (captchaType < 0.5) {
             if (window.showNBACaptcha) window.showNBACaptcha();
-        } else if (captchaType < 0.666) {
+        } else if (captchaType < 0.6) {
             if (window.showLunarLanderCaptcha) window.showLunarLanderCaptcha();
-        } else if (captchaType < 0.777) {
+        } else if (captchaType < 0.7) {
             if (window.showTanksCaptcha) window.showTanksCaptcha();
-        } else if (captchaType < 0.888) {
+        } else if (captchaType < 0.8) {
             if (window.showDartsCaptcha) window.showDartsCaptcha();
-        } else {
+        } else if (captchaType < 0.9) {
             if (window.showChessCaptcha) window.showChessCaptcha();
+        } else {
+            if (window.showFlappyBirdCaptcha) window.showFlappyBirdCaptcha();
         }
     } else {
         completeCheckout();
