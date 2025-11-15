@@ -113,4 +113,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugSkiFreeCaptcha = document.getElementById('debug-skifree-captcha');
+    if (debugSkiFreeCaptcha) {
+        debugSkiFreeCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showSkiFreeCaptcha) {
+                window.showSkiFreeCaptcha();
+            }
+        });
+    }
 }

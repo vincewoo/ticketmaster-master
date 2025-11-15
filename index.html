@@ -378,6 +378,28 @@
             </div>
         </div>
 
+        <!-- SkiFree CAPTCHA Modal -->
+        <div id="skifree-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Survive the ski slope for 10 seconds! Move your mouse to control the skier.</p>
+                <div id="skifree-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time Remaining: <span id="skifree-timer">10</span>s
+                </div>
+                <div class="skifree-game-container">
+                    <canvas id="skifree-canvas" width="400" height="500"></canvas>
+                    <p class="skifree-instructions">🖱️ Move your mouse left/right to dodge obstacles and the Yeti!</p>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="skifree-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="skifree-feedback" class="captcha-error"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -519,6 +541,7 @@
                     <button id="debug-darts-captcha" class="debug-btn">Darts Bullseye</button>
                     <button id="debug-chess-captcha" class="debug-btn">Chess Checkmate</button>
                     <button id="debug-flappy-bird-captcha" class="debug-btn">Flappy Bird</button>
+                    <button id="debug-skifree-captcha" class="debug-btn">SkiFree</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>
