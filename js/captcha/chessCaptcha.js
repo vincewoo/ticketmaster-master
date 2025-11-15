@@ -277,11 +277,26 @@ export function showCAPTCHA() {
 
         switch (pieceType) {
             case 'r': // Rook
-                // Horizontal and vertical
-                for (let i = 0; i < 8; i++) {
-                    if (i !== col) moves.push([row, i]); // Horizontal
-                    if (i !== row) moves.push([i, col]); // Vertical
-                }
+                // Horizontal and vertical - stop at first piece in each direction
+                const rookDirections = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // right, left, down, up
+                rookDirections.forEach(([dr, dc]) => {
+                    for (let i = 1; i < 8; i++) {
+                        const newRow = row + (dr * i);
+                        const newCol = col + (dc * i);
+                        if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
+
+                        const targetPiece = chessGameState.board[newRow][newCol];
+                        if (targetPiece) {
+                            // Hit a piece - can capture if enemy, then stop
+                            const targetIsWhite = targetPiece === targetPiece.toUpperCase();
+                            if (targetIsWhite !== isWhite) {
+                                moves.push([newRow, newCol]);
+                            }
+                            break; // Stop in this direction
+                        }
+                        moves.push([newRow, newCol]); // Empty square
+                    }
+                });
                 break;
             case 'n': // Knight
                 const knightMoves = [
@@ -292,31 +307,60 @@ export function showCAPTCHA() {
                     const newRow = row + dr;
                     const newCol = col + dc;
                     if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
-                        moves.push([newRow, newCol]);
+                        const targetPiece = chessGameState.board[newRow][newCol];
+                        // Can move to empty square or capture enemy piece
+                        if (!targetPiece || (targetPiece.toUpperCase() === targetPiece) !== isWhite) {
+                            moves.push([newRow, newCol]);
+                        }
                     }
                 });
                 break;
             case 'b': // Bishop
-                // Diagonals
-                for (let i = 1; i < 8; i++) {
-                    if (row + i < 8 && col + i < 8) moves.push([row + i, col + i]);
-                    if (row + i < 8 && col - i >= 0) moves.push([row + i, col - i]);
-                    if (row - i >= 0 && col + i < 8) moves.push([row - i, col + i]);
-                    if (row - i >= 0 && col - i >= 0) moves.push([row - i, col - i]);
-                }
+                // Diagonals - stop at first piece in each direction
+                const bishopDirections = [[1, 1], [1, -1], [-1, 1], [-1, -1]]; // SE, SW, NE, NW
+                bishopDirections.forEach(([dr, dc]) => {
+                    for (let i = 1; i < 8; i++) {
+                        const newRow = row + (dr * i);
+                        const newCol = col + (dc * i);
+                        if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
+
+                        const targetPiece = chessGameState.board[newRow][newCol];
+                        if (targetPiece) {
+                            // Hit a piece - can capture if enemy, then stop
+                            const targetIsWhite = targetPiece === targetPiece.toUpperCase();
+                            if (targetIsWhite !== isWhite) {
+                                moves.push([newRow, newCol]);
+                            }
+                            break; // Stop in this direction
+                        }
+                        moves.push([newRow, newCol]); // Empty square
+                    }
+                });
                 break;
             case 'q': // Queen
-                // Combination of rook and bishop
-                for (let i = 0; i < 8; i++) {
-                    if (i !== col) moves.push([row, i]);
-                    if (i !== row) moves.push([i, col]);
-                }
-                for (let i = 1; i < 8; i++) {
-                    if (row + i < 8 && col + i < 8) moves.push([row + i, col + i]);
-                    if (row + i < 8 && col - i >= 0) moves.push([row + i, col - i]);
-                    if (row - i >= 0 && col + i < 8) moves.push([row - i, col + i]);
-                    if (row - i >= 0 && col - i >= 0) moves.push([row - i, col - i]);
-                }
+                // Combination of rook and bishop directions - stop at first piece in each direction
+                const queenDirections = [
+                    [0, 1], [0, -1], [1, 0], [-1, 0], // Rook directions
+                    [1, 1], [1, -1], [-1, 1], [-1, -1] // Bishop directions
+                ];
+                queenDirections.forEach(([dr, dc]) => {
+                    for (let i = 1; i < 8; i++) {
+                        const newRow = row + (dr * i);
+                        const newCol = col + (dc * i);
+                        if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
+
+                        const targetPiece = chessGameState.board[newRow][newCol];
+                        if (targetPiece) {
+                            // Hit a piece - can capture if enemy, then stop
+                            const targetIsWhite = targetPiece === targetPiece.toUpperCase();
+                            if (targetIsWhite !== isWhite) {
+                                moves.push([newRow, newCol]);
+                            }
+                            break; // Stop in this direction
+                        }
+                        moves.push([newRow, newCol]); // Empty square
+                    }
+                });
                 break;
             case 'k': // King
                 for (let dr = -1; dr <= 1; dr++) {
@@ -325,7 +369,11 @@ export function showCAPTCHA() {
                         const newRow = row + dr;
                         const newCol = col + dc;
                         if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
-                            moves.push([newRow, newCol]);
+                            const targetPiece = chessGameState.board[newRow][newCol];
+                            // Can move to empty square or capture enemy piece
+                            if (!targetPiece || (targetPiece.toUpperCase() === targetPiece) !== isWhite) {
+                                moves.push([newRow, newCol]);
+                            }
                         }
                     }
                 }
@@ -334,28 +382,28 @@ export function showCAPTCHA() {
                 const direction = isWhite ? -1 : 1;
                 const newRow = row + direction;
                 if (newRow >= 0 && newRow < 8) {
-                    // Forward move
+                    // Forward move (only if empty)
                     if (!chessGameState.board[newRow][col]) {
                         moves.push([newRow, col]);
                     }
-                    // Diagonal captures
-                    if (col > 0 && chessGameState.board[newRow][col - 1]) {
-                        moves.push([newRow, col - 1]);
+                    // Diagonal captures (only enemy pieces)
+                    if (col > 0) {
+                        const leftPiece = chessGameState.board[newRow][col - 1];
+                        if (leftPiece && (leftPiece.toUpperCase() === leftPiece) !== isWhite) {
+                            moves.push([newRow, col - 1]);
+                        }
                     }
-                    if (col < 7 && chessGameState.board[newRow][col + 1]) {
-                        moves.push([newRow, col + 1]);
+                    if (col < 7) {
+                        const rightPiece = chessGameState.board[newRow][col + 1];
+                        if (rightPiece && (rightPiece.toUpperCase() === rightPiece) !== isWhite) {
+                            moves.push([newRow, col + 1]);
+                        }
                     }
                 }
                 break;
         }
 
-        // Filter out moves that capture own pieces
-        return moves.filter(([r, c]) => {
-            const targetPiece = chessGameState.board[r][c];
-            if (!targetPiece) return true;
-            const targetIsWhite = targetPiece === targetPiece.toUpperCase();
-            return targetIsWhite !== isWhite;
-        });
+        return moves;
     }
 
     // Check if the move is the correct solution
