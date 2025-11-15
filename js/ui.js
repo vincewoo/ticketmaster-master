@@ -95,4 +95,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugChessCaptcha = document.getElementById('debug-chess-captcha');
+    if (debugChessCaptcha) {
+        debugChessCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showChessCaptcha) {
+                window.showChessCaptcha();
+            }
+        });
+    }
 }

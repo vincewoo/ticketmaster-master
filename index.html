@@ -324,6 +324,31 @@
             </div>
         </div>
 
+        <!-- Chess CAPTCHA Modal -->
+        <div id="chess-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Find the checkmate in one move to prove you're human!</p>
+                <div id="chess-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="captcha-timer">
+                    Time: <span id="chess-timer">15</span>s
+                </div>
+                <div class="chess-game-container">
+                    <canvas id="chess-canvas" width="400" height="400"></canvas>
+                    <div class="chess-instruction">
+                        Click a piece to select it, then click where to move it.
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="reset-chess-button" class="btn-secondary">Reset Board</button>
+                    <button id="cancel-chess-button" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="chess-feedback" class="captcha-error"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -463,6 +488,7 @@
                     <button id="debug-lunar-lander-captcha" class="debug-btn">Lunar Lander</button>
                     <button id="debug-tanks-captcha" class="debug-btn">Tanks Artillery</button>
                     <button id="debug-darts-captcha" class="debug-btn">Darts Bullseye</button>
+                    <button id="debug-chess-captcha" class="debug-btn">Chess Checkmate</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>

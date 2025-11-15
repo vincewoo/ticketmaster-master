@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Seat Validation Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #1e3c72;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .test-grid {
+            display: grid;
+            gap: 5px;
+            margin: 20px 0;
+            max-width: 600px;
+        }
+        .seat {
+            aspect-ratio: 1;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 600;
+            background: #3b82f6;
+            color: white;
+        }
+        .seat.selected {
+            background: #f093fb;
+            border-color: #fff;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .result.valid {
+            background: #d4edda;
+            color: #155724;
+        }
+        .result.invalid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .grid-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 6px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <h1>Block Seat Validation Test</h1>
+    <p>This page tests the block seat validation logic across different grid layouts (12, 6, and 4 columns).</p>
+
+    <div class="test-section">
+        <h2>Test Grid</h2>
+        <div class="grid-info">
+            Current Grid: <span id="current-grid-info">12 columns (Desktop)</span><br>
+            Window Width: <span id="window-width">-</span>px
+        </div>
+        <label>
+            Grid Columns:
+            <select id="grid-selector">
+                <option value="12" selected>12 (Desktop)</option>
+                <option value="6">6 (Tablet)</option>
+                <option value="4">4 (Mobile)</option>
+            </select>
+        </label>
+        <button onclick="clearSelection()">Clear Selection</button>
+        <button onclick="testBlock1()">Test 2x2 Block (4 seats)</button>
+        <button onclick="testBlock2()">Test 3+2 Block (5 seats)</button>
+        <div id="test-grid" class="test-grid"></div>
+        <div id="result"></div>
+    </div>
+
+    <script type="module">
+        // Simplified version of the validation logic
+        let gameState = {
+            currentGridColumns: 12,
+            cart: [],
+            seats: []
+        };
+
+        // Generate 96 seats
+        for (let i = 0; i < 96; i++) {
+            const row = Math.floor(i / 12);
+            const col = i % 12;
+            gameState.seats.push({
+                id: `${String.fromCharCode(65 + row)}${col + 1}`,
+                row,
+                col,
+                index: i
+            });
+        }
+
+        // The updated validation function
+        function areSeatsAdjacent(cartItems) {
+            if (cartItems.length === 0) return false;
+            if (cartItems.length === 1) return true;
+
+            const seats = cartItems.map(item =>
+                gameState.seats.find(s => s.id === item.seatId)
+            );
+
+            // Recalculate row/col based on current grid columns
+            const currentCols = gameState.currentGridColumns;
+            const seatsWithCurrentPosition = seats.map(seat => {
+                const seatIndex = gameState.seats.findIndex(s => s.id === seat.id);
+                const currentRow = Math.floor(seatIndex / currentCols);
+                const currentCol = seatIndex % currentCols;
+                return {
+                    ...seat,
+                    currentRow,
+                    currentCol
+                };
+            });
+
+            // Group by current row
+            const rowGroups = {};
+            seatsWithCurrentPosition.forEach(seat => {
+                if (!rowGroups[seat.currentRow]) {
+                    rowGroups[seat.currentRow] = [];
+                }
+                rowGroups[seat.currentRow].push(seat.currentCol);
+            });
+
+            const rows = Object.keys(rowGroups).map(Number).sort((a, b) => a - b);
+
+            // For 1-3 seats: must be in same row
+            if (cartItems.length <= 3) {
+                if (rows.length !== 1) return false;
+
+                const cols = rowGroups[rows[0]].sort((a, b) => a - b);
+                for (let i = 1; i < cols.length; i++) {
+                    if (cols[i] - cols[i - 1] !== 1) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            // For 4+ seats: allow 1 or 2 rows
+            if (rows.length === 1) {
+                const cols = rowGroups[rows[0]].sort((a, b) => a - b);
+                for (let i = 1; i < cols.length; i++) {
+                    if (cols[i] - cols[i - 1] !== 1) {
+                        return false;
+                    }
+                }
+                return true;
+            } else if (rows.length === 2) {
+                const row1 = rows[0];
+                const row2 = rows[1];
+
+                if (row2 - row1 !== 1) return false;
+                if (rowGroups[row1].length < 2 || rowGroups[row2].length < 2) return false;
+
+                const cols1 = rowGroups[row1].sort((a, b) => a - b);
+                const cols2 = rowGroups[row2].sort((a, b) => a - b);
+
+                for (let i = 1; i < cols1.length; i++) {
+                    if (cols1[i] - cols1[i - 1] !== 1) return false;
+                }
+                for (let i = 1; i < cols2.length; i++) {
+                    if (cols2[i] - cols2[i - 1] !== 1) return false;
+                }
+
+                const hasOverlap = cols1.some(col => cols2.includes(col));
+                if (!hasOverlap) return false;
+
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        // Render grid
+        function renderGrid() {
+            const gridEl = document.getElementById('test-grid');
+            gridEl.innerHTML = '';
+            gridEl.style.gridTemplateColumns = `repeat(${gameState.currentGridColumns}, 1fr)`;
+
+            gameState.seats.forEach(seat => {
+                const seatEl = document.createElement('div');
+                seatEl.className = 'seat';
+                seatEl.textContent = seat.id;
+
+                if (gameState.cart.some(c => c.seatId === seat.id)) {
+                    seatEl.classList.add('selected');
+                }
+
+                seatEl.onclick = () => toggleSeat(seat.id);
+                gridEl.appendChild(seatEl);
+            });
+
+            updateResult();
+        }
+
+        // Toggle seat selection
+        function toggleSeat(seatId) {
+            const index = gameState.cart.findIndex(c => c.seatId === seatId);
+            if (index >= 0) {
+                gameState.cart.splice(index, 1);
+            } else {
+                gameState.cart.push({ seatId });
+            }
+            renderGrid();
+        }
+
+        // Update validation result
+        function updateResult() {
+            const resultEl = document.getElementById('result');
+            if (gameState.cart.length === 0) {
+                resultEl.innerHTML = '';
+                return;
+            }
+
+            const isValid = areSeatsAdjacent(gameState.cart);
+            resultEl.className = `result ${isValid ? 'valid' : 'invalid'}`;
+
+            const seatIds = gameState.cart.map(c => c.seatId).join(', ');
+            resultEl.innerHTML = `
+                <strong>${isValid ? '✓ VALID' : '✗ INVALID'}</strong><br>
+                Selected: ${seatIds} (${gameState.cart.length} seats)<br>
+                Grid: ${gameState.currentGridColumns} columns
+            `;
+        }
+
+        // Change grid columns
+        document.getElementById('grid-selector').onchange = function(e) {
+            gameState.currentGridColumns = parseInt(e.target.value);
+            const label = e.target.options[e.target.selectedIndex].text;
+            document.getElementById('current-grid-info').textContent = `${gameState.currentGridColumns} columns (${label.split(' ')[1]})`;
+            renderGrid();
+        };
+
+        // Clear selection
+        window.clearSelection = function() {
+            gameState.cart = [];
+            renderGrid();
+        };
+
+        // Test cases
+        window.testBlock1 = function() {
+            // 2x2 block starting at A1
+            gameState.cart = [
+                { seatId: 'A1' },
+                { seatId: 'A2' },
+                { seatId: 'B1' },
+                { seatId: 'B2' }
+            ];
+            renderGrid();
+        };
+
+        window.testBlock2 = function() {
+            // 3+2 block (row A: 3 seats, row B: 2 seats)
+            gameState.cart = [
+                { seatId: 'A1' },
+                { seatId: 'A2' },
+                { seatId: 'A3' },
+                { seatId: 'B1' },
+                { seatId: 'B2' }
+            ];
+            renderGrid();
+        };
+
+        // Update window width display
+        function updateWindowWidth() {
+            document.getElementById('window-width').textContent = window.innerWidth;
+        }
+
+        // Initial render
+        renderGrid();
+        updateWindowWidth();
+        window.addEventListener('resize', updateWindowWidth);
+    </script>
+</body>
+</html>

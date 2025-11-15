@@ -23,16 +23,32 @@ export const PRICE_TIERS = [
 
 /**
  * Get grid configuration based on screen size
+ * Matches CSS media query breakpoints
  * @returns {Object} Grid configuration { columns, rows, total }
  */
 export function getGridConfig() {
     const width = window.innerWidth;
     if (width <= 480) {
-        return { columns: 4, rows: 8, total: 32 }; // Small phones: 4x8
+        return { columns: 4, rows: 24, total: 96 }; // Small phones: 4 columns, wraps to 24 rows
     } else if (width <= 768) {
-        return { columns: 6, rows: 8, total: 48 }; // Medium phones/tablets: 6x8
+        return { columns: 6, rows: 16, total: 96 }; // Medium phones/tablets: 6 columns, wraps to 16 rows
     } else {
         return { columns: 12, rows: 8, total: 96 }; // Desktop/large tablets: 12x8
+    }
+}
+
+/**
+ * Get current display grid columns based on window width
+ * @returns {number} Number of columns in current layout
+ */
+export function getCurrentGridColumns() {
+    const width = window.innerWidth;
+    if (width <= 480) {
+        return 4;
+    } else if (width <= 768) {
+        return 6;
+    } else {
+        return 12;
     }
 }
 

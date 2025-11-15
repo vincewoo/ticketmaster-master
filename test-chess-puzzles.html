@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Puzzle Unit Tests</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 {
+            color: #4ec9b0;
+        }
+        .test-results {
+            margin-top: 20px;
+        }
+        .test {
+            background: #252526;
+            border-left: 4px solid #007acc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .test.pass {
+            border-left-color: #4ec9b0;
+        }
+        .test.fail {
+            border-left-color: #f48771;
+        }
+        .test-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .test.pass .test-name::before {
+            content: "✓ ";
+            color: #4ec9b0;
+        }
+        .test.fail .test-name::before {
+            content: "✗ ";
+            color: #f48771;
+        }
+        .test-details {
+            font-size: 0.9em;
+            color: #858585;
+            margin-top: 5px;
+        }
+        .error-msg {
+            color: #f48771;
+            margin-top: 5px;
+            padding: 5px;
+            background: rgba(244, 135, 113, 0.1);
+            border-radius: 3px;
+        }
+        .board-display {
+            font-family: monospace;
+            line-height: 1.2;
+            margin: 10px 0;
+            white-space: pre;
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .summary {
+            background: #252526;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 1.1em;
+        }
+        .summary.all-pass {
+            border-left: 4px solid #4ec9b0;
+        }
+        .summary.has-fail {
+            border-left: 4px solid #f48771;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chess Puzzle Validation Tests</h1>
+    <div id="test-results" class="test-results"></div>
+    <div id="summary" class="summary"></div>
+
+    <script type="module">
+        // Import the puzzles
+        const PIECES = {
+            'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+            'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+        };
+
+        const PUZZLES = [
+            {
+                // Back Rank Mate - Classic back rank checkmate
+                board: [
+                    [null, null, null, null, null, null, 'k', null],  // a8-h8: king on g8
+                    [null, null, null, null, null, 'p', 'p', 'p'],     // a7-h7: pawns trap king
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    ['P', 'P', 'P', null, null, 'P', 'P', 'P'],
+                    [null, null, null, null, 'R', null, 'K', null]     // a1-h1: White rook on e1
+                ],
+                playerColor: 'white',
+                solution: { from: [7, 4], to: [0, 4] }, // Rook e1 to e8#
+                description: 'Back Rank Mate'
+            },
+            {
+                // Smothered Mate - Knight delivers mate, king smothered by own pieces
+                // King on g8, rook on g8, pawns on f7/g7/h7, knight delivers mate on f7
+                board: [
+                    [null, null, null, null, null, null, 'r', 'k'],    // King on g8
+                    [null, null, null, null, null, 'p', 'p', 'p'],      // Pawns on f7, g7, h7
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, 'N', null, null, null],    // Knight on e5
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    ['P', 'P', 'P', null, null, 'P', 'P', 'P'],
+                    ['R', null, null, 'Q', null, null, 'K', null]       // Queen on d1
+                ],
+                playerColor: 'white',
+                solution: { from: [3, 4], to: [1, 5] }, // Knight e5 to f7#
+                description: 'Smothered Mate'
+            },
+            {
+                // Anastasia's Mate - Rook and knight trap king on edge
+                // King on h8, pawn on g7, knight on f6 controls escape, rook delivers mate on h-file
+                board: [
+                    [null, null, null, null, null, null, null, 'k'],    // King on h8
+                    [null, null, null, null, null, null, 'p', null],    // Pawn on g7 (blocks king escape)
+                    [null, null, null, null, null, 'N', null, null],    // White knight on f6 (controls g8, h7)
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    ['P', 'P', null, null, null, 'P', 'P', null],
+                    [null, null, null, null, null, 'K', 'R', null]      // King on g1, Rook on h1
+                ],
+                playerColor: 'white',
+                solution: { from: [7, 6], to: [7, 7] }, // Rook g1 to h1#
+                description: "Anastasia's Mate"
+            },
+            {
+                // Epaulette Mate - Queen delivers mate, king's own rooks block escape
+                board: [
+                    [null, null, null, null, 'r', 'k', 'r', null],     // Rooks on e8 and g8, king on f8
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],   
+                    [null, null, 'Q', null, null, null, null, null], // White queen on c3
+                    ['P', 'P', 'P', null, null, 'P', 'P', 'P'],
+                    ['R', null, null, null, 'K', null, null, 'R']
+                ],
+                playerColor: 'white',
+                solution: { from: [5, 2], to: [2, 5] }, // Queen c3 to f6#
+                description: "Epaulette Mate"
+            },
+            {
+                // Arabian Mate - Rook and knight corner the king
+                // Rook on a8 delivers mate on h-file, knight on f6 protects and controls escape squares
+                board: [
+                    [null, null, null, null, null, null, null, 'k'],    // King on h8
+                    ['R', null, null, null, null, null, null, null],    // Rook on a8
+                    [null, null, null, null, null, 'N', null, null],    // White knight on f6 (protects g8, controls g7/h7)
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    ['P', 'P', 'P', null, null, 'P', 'P', 'P'],
+                    [null, null, null, null, null, null, 'R', 'K']      
+                ],
+                playerColor: 'white',
+                solution: { from: [1, 0], to: [1, 7] }, // Rook a8 to h8#
+                description: 'Arabian Mate'
+            },
+            {
+                // Queen and King Mate - Simple queen checkmate in endgame
+                // White king on f6 controls escape squares, queen delivers mate on g7
+                board: [
+                    [null, null, null, null, null, null, null, 'k'],   // Black king on h8
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, 'K', null, null],   // White king on f6 (controls g7/h7/g8)
+                    [null, null, null, null, null, null, 'Q', null],   // White queen on g5 (clear path to g7)
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    ['P', 'P', 'P', null, null, 'P', 'P', 'P'],
+                    ['R', null, null, null, null, null, null, 'R']
+                ],
+                playerColor: 'white',
+                solution: { from: [3, 6], to: [1, 6] }, // Queen g5 to g7#
+                description: 'Queen Mate'
+            },
+            {
+                // Scholar's Mate - Classic beginner trap
+                board: [
+                    ['r', 'n', 'b', 'q', 'k', null, null, 'r'],        // Black back rank
+                    ['p', 'p', 'p', 'p', null, 'p', 'p', 'p'],         // e7 pawn moved
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, 'p', null, null, null],   // Black pawn on e5
+                    [null, null, 'B', null, null, null, null, null],   // White bishop on c4
+                    [null, null, null, null, null, 'Q', null, null],   // White queen on f3
+                    ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                    ['R', 'N', 'B', null, 'K', null, 'N', 'R']
+                ],
+                playerColor: 'white',
+                solution: { from: [5, 5], to: [1, 5] }, // Queen f3 to f7#
+                description: "Scholar's Mate"
+            },
+            {
+                // Ladder Mate - Two rooks drive king to edge
+                // One rook on b7 cuts off 7th rank, other delivers mate on g8
+                board: [
+                    [null, null, null, null, 'k', null, null, null],   // Black king on e8
+                    [null, 'R', null, null, null, null, null, null],   // White rook on b7 (cuts off 7th rank, prevents king moving to e7)
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, null, null, null, null, null, null],
+                    [null, null, 'K', null, null, null, 'R', null]     // White king on c1, Rook on g1 (will deliver mate)
+                ],
+                playerColor: 'white',
+                solution: { from: [7, 6], to: [0, 6] }, // Rook g1 to g8#
+                description: 'Ladder Mate'
+            }
+        ];
+
+        // Helper functions
+        function findKing(board, color) {
+            const kingPiece = color === 'white' ? 'K' : 'k';
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if (board[row][col] === kingPiece) {
+                        return [row, col];
+                    }
+                }
+            }
+            return null;
+        }
+
+        function isSquareAttacked(board, row, col, byColor) {
+            // Check if square [row, col] is attacked by pieces of 'byColor'
+            const isWhite = byColor === 'white';
+
+            // Check all squares for attacking pieces
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const piece = board[r][c];
+                    if (!piece) continue;
+
+                    const pieceIsWhite = piece === piece.toUpperCase();
+                    if (pieceIsWhite !== isWhite) continue;
+
+                    if (canPieceAttackSquare(board, r, c, row, col, piece)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function canPieceAttackSquare(board, fromRow, fromCol, toRow, toCol, piece) {
+            const pieceType = piece.toLowerCase();
+            const dr = toRow - fromRow;
+            const dc = toCol - fromCol;
+
+            switch (pieceType) {
+                case 'p':
+                    const direction = piece === piece.toUpperCase() ? -1 : 1;
+                    return dr === direction && Math.abs(dc) === 1;
+                case 'n':
+                    return (Math.abs(dr) === 2 && Math.abs(dc) === 1) ||
+                           (Math.abs(dr) === 1 && Math.abs(dc) === 2);
+                case 'b':
+                    if (Math.abs(dr) !== Math.abs(dc)) return false;
+                    return isPathClear(board, fromRow, fromCol, toRow, toCol);
+                case 'r':
+                    if (dr !== 0 && dc !== 0) return false;
+                    return isPathClear(board, fromRow, fromCol, toRow, toCol);
+                case 'q':
+                    if (dr !== 0 && dc !== 0 && Math.abs(dr) !== Math.abs(dc)) return false;
+                    return isPathClear(board, fromRow, fromCol, toRow, toCol);
+                case 'k':
+                    return Math.abs(dr) <= 1 && Math.abs(dc) <= 1;
+            }
+            return false;
+        }
+
+        function isPathClear(board, fromRow, fromCol, toRow, toCol) {
+            const dr = Math.sign(toRow - fromRow);
+            const dc = Math.sign(toCol - fromCol);
+            let r = fromRow + dr;
+            let c = fromCol + dc;
+
+            while (r !== toRow || c !== toCol) {
+                if (board[r][c]) return false;
+                r += dr;
+                c += dc;
+            }
+            return true;
+        }
+
+        function makeMove(board, from, to) {
+            const newBoard = board.map(row => [...row]);
+            newBoard[to[0]][to[1]] = newBoard[from[0]][from[1]];
+            newBoard[from[0]][from[1]] = null;
+            return newBoard;
+        }
+
+        function hasLegalMoves(board, color) {
+            const isWhite = color === 'white';
+
+            for (let fromRow = 0; fromRow < 8; fromRow++) {
+                for (let fromCol = 0; fromCol < 8; fromCol++) {
+                    const piece = board[fromRow][fromCol];
+                    if (!piece) continue;
+
+                    const pieceIsWhite = piece === piece.toUpperCase();
+                    if (pieceIsWhite !== isWhite) continue;
+
+                    // Try all possible destination squares
+                    for (let toRow = 0; toRow < 8; toRow++) {
+                        for (let toCol = 0; toCol < 8; toCol++) {
+                            if (fromRow === toRow && fromCol === toCol) continue;
+
+                            const targetPiece = board[toRow][toCol];
+                            if (targetPiece) {
+                                const targetIsWhite = targetPiece === targetPiece.toUpperCase();
+                                if (targetIsWhite === isWhite) continue; // Can't capture own piece
+                            }
+
+                            // Special handling for pawns
+                            if (piece.toLowerCase() === 'p') {
+                                const dr = toRow - fromRow;
+                                const dc = toCol - fromCol;
+                                const direction = piece === piece.toUpperCase() ? -1 : 1;
+
+                                // Diagonal moves (captures) - only if target has enemy piece
+                                if (Math.abs(dc) === 1 && dr === direction) {
+                                    if (!targetPiece) continue; // Can't move diagonally to empty square
+                                }
+                                // Forward moves - only to empty squares
+                                else if (dc === 0) {
+                                    if (targetPiece) continue; // Can't move forward to occupied square
+                                    // Single square forward
+                                    if (dr === direction) {
+                                        // Valid forward move
+                                    }
+                                    // Two squares forward from starting position
+                                    else if (Math.abs(dr) === 2 &&
+                                            ((piece === 'P' && fromRow === 6) || (piece === 'p' && fromRow === 1))) {
+                                        if (!isPathClear(board, fromRow, fromCol, toRow, toCol)) continue;
+                                    } else {
+                                        continue; // Invalid pawn move
+                                    }
+                                } else {
+                                    continue; // Invalid pawn move
+                                }
+                            } else if (!canPieceAttackSquare(board, fromRow, fromCol, toRow, toCol, piece)) {
+                                continue; // Not a valid move for this piece type
+                            }
+
+                            // Check if this move leaves king in check
+                            const newBoard = makeMove(board, [fromRow, fromCol], [toRow, toCol]);
+                            const kingPos = findKing(newBoard, color);
+                            if (kingPos && !isSquareAttacked(newBoard, kingPos[0], kingPos[1], color === 'white' ? 'black' : 'white')) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function boardToString(board) {
+            let str = '  a b c d e f g h\n';
+            for (let row = 0; row < 8; row++) {
+                str += `${8-row} `;
+                for (let col = 0; col < 8; col++) {
+                    const piece = board[row][col];
+                    str += piece ? PIECES[piece] : '·';
+                    str += ' ';
+                }
+                str += `${8-row}\n`;
+            }
+            str += '  a b c d e f g h';
+            return str;
+        }
+
+        // Test functions
+        function testPuzzle(puzzle, index) {
+            const errors = [];
+            const details = [];
+
+            // Test 1: King is NOT in check before the move
+            const opponentColor = puzzle.playerColor === 'white' ? 'black' : 'white';
+            const kingPos = findKing(puzzle.board, opponentColor);
+
+            if (!kingPos) {
+                errors.push(`No ${opponentColor} king found on board`);
+            } else {
+                const inCheck = isSquareAttacked(puzzle.board, kingPos[0], kingPos[1], puzzle.playerColor);
+                if (inCheck) {
+                    errors.push(`King is already in check before the move`);
+                } else {
+                    details.push(`✓ King is not in check initially`);
+                }
+            }
+
+            // Test 2: The solution move is legal
+            const from = puzzle.solution.from;
+            const to = puzzle.solution.to;
+            const movingPiece = puzzle.board[from[0]][from[1]];
+
+            if (!movingPiece) {
+                errors.push(`No piece at solution starting position [${from}]`);
+            } else {
+                const pieceIsWhite = movingPiece === movingPiece.toUpperCase();
+                const expectedWhite = puzzle.playerColor === 'white';
+
+                if (pieceIsWhite !== expectedWhite) {
+                    errors.push(`Piece at [${from}] belongs to wrong player`);
+                } else {
+                    details.push(`✓ Moving piece (${PIECES[movingPiece]}) belongs to ${puzzle.playerColor}`);
+                }
+
+                if (!canPieceAttackSquare(puzzle.board, from[0], from[1], to[0], to[1], movingPiece)) {
+                    errors.push(`Piece ${PIECES[movingPiece]} cannot move from [${from}] to [${to}]`);
+                } else {
+                    details.push(`✓ Move is legal for piece type`);
+                }
+            }
+
+            // Test 3: After the move, opponent king is in checkmate
+            const boardAfterMove = makeMove(puzzle.board, from, to);
+            const kingPosAfter = findKing(boardAfterMove, opponentColor);
+
+            if (!kingPosAfter) {
+                errors.push(`King not found after move`);
+            } else {
+                const inCheckAfter = isSquareAttacked(boardAfterMove, kingPosAfter[0], kingPosAfter[1], puzzle.playerColor);
+
+                if (!inCheckAfter) {
+                    errors.push(`King is NOT in check after the move - not checkmate!`);
+                } else {
+                    details.push(`✓ King is in check after move`);
+
+                    const hasEscape = hasLegalMoves(boardAfterMove, opponentColor);
+                    if (hasEscape) {
+                        errors.push(`King has legal moves to escape check - not checkmate!`);
+                    } else {
+                        details.push(`✓ King has no legal moves - it's checkmate!`);
+                    }
+                }
+            }
+
+            return {
+                passed: errors.length === 0,
+                errors,
+                details,
+                boardBefore: boardToString(puzzle.board),
+                boardAfter: boardToString(boardAfterMove)
+            };
+        }
+
+        // Run tests and display results
+        function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+            const summaryDiv = document.getElementById('summary');
+            let passCount = 0;
+            let failCount = 0;
+
+            PUZZLES.forEach((puzzle, index) => {
+                const result = testPuzzle(puzzle, index);
+
+                const testDiv = document.createElement('div');
+                testDiv.className = `test ${result.passed ? 'pass' : 'fail'}`;
+
+                const from = puzzle.solution.from;
+                const to = puzzle.solution.to;
+                const cols = 'abcdefgh';
+                const moveNotation = `${cols[from[1]]}${8-from[0]} → ${cols[to[1]]}${8-to[0]}`;
+
+                testDiv.innerHTML = `
+                    <div class="test-name">Test ${index + 1}: ${puzzle.description}</div>
+                    <div class="test-details">Solution: ${moveNotation}</div>
+                    ${result.errors.length > 0 ? `
+                        <div class="error-msg">
+                            ${result.errors.map(e => `❌ ${e}`).join('<br>')}
+                        </div>
+                    ` : ''}
+                    <div class="test-details">
+                        ${result.details.join('<br>')}
+                    </div>
+                    <div class="board-display">Before move:\n${result.boardBefore}</div>
+                    ${result.passed ? `<div class="board-display">After move:\n${result.boardAfter}</div>` : ''}
+                `;
+
+                resultsDiv.appendChild(testDiv);
+
+                if (result.passed) {
+                    passCount++;
+                } else {
+                    failCount++;
+                }
+            });
+
+            summaryDiv.className = `summary ${failCount === 0 ? 'all-pass' : 'has-fail'}`;
+            summaryDiv.innerHTML = `
+                <strong>Test Summary:</strong><br>
+                Total: ${PUZZLES.length} puzzles<br>
+                Passed: ${passCount}<br>
+                Failed: ${failCount}<br>
+                ${failCount === 0 ? '🎉 All puzzles are valid mate-in-1 positions!' : '⚠️ Some puzzles need fixing'}
+            `;
+        }
+
+        // Run tests on page load
+        runTests();
+    </script>
+</body>
+</html>

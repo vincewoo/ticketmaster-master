@@ -17,13 +17,28 @@ export function areSeatsAdjacent(cartItems) {
         gameState.seats.find(s => s.id === item.seatId)
     );
 
-    // Group by row
+    // Recalculate row/col based on current grid columns (responsive layout)
+    const currentCols = gameState.currentGridColumns;
+    const seatsWithCurrentPosition = seats.map(seat => {
+        // Find seat index in the original seats array
+        const seatIndex = gameState.seats.findIndex(s => s.id === seat.id);
+        // Recalculate row and col based on current grid
+        const currentRow = Math.floor(seatIndex / currentCols);
+        const currentCol = seatIndex % currentCols;
+        return {
+            ...seat,
+            currentRow,
+            currentCol
+        };
+    });
+
+    // Group by current row (not original row)
     const rowGroups = {};
-    seats.forEach(seat => {
-        if (!rowGroups[seat.row]) {
-            rowGroups[seat.row] = [];
+    seatsWithCurrentPosition.forEach(seat => {
+        if (!rowGroups[seat.currentRow]) {
+            rowGroups[seat.currentRow] = [];
         }
-        rowGroups[seat.row].push(seat.col);
+        rowGroups[seat.currentRow].push(seat.currentCol);
     });
 
     const rows = Object.keys(rowGroups).map(Number).sort((a, b) => a - b);

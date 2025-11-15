@@ -50,6 +50,7 @@ Simply open `index.html` in a web browser - no build system required.
 - `js/captcha/lunarLanderCaptcha.js` - Physics-based lunar landing simulation
 - `js/captcha/tanksCaptcha.js` - Artillery aiming game with angle and power
 - `js/captcha/dartsCaptcha.js` - Steady hand dartboard bullseye challenge
+- `js/captcha/chessCaptcha.js` - Mate-in-1 chess puzzle challenge
 
 **Legacy:**
 - `game.js` - Original monolithic version (kept for reference, not loaded)
@@ -128,7 +129,7 @@ The game uses a single `gameState` object to track:
      - Medium red (#dc2626): 5-10% premium
      - Dark red (#b91c1c): 10%+ premium
 
-4. **CAPTCHA System** (8 Different Types):
+4. **CAPTCHA System** (9 Different Types):
    - 60% chance on checkout (100% if competing with opponent for same seats)
    - Random CAPTCHA type selected each time
    - Warning shown if opponent is competing for same seats
@@ -142,6 +143,7 @@ The game uses a single `gameState` object to track:
    - **Lunar Lander**: Land the lunar module safely with realistic physics (15s timer, hold button for thrust)
    - **Tanks Artillery**: Hit enemy tank by adjusting angle and power (20s timer, projectile physics)
    - **Darts Bullseye**: Steady your hand - throw dart when moving crosshair is over bullseye (15s timer, timing-based)
+   - **Chess Checkmate**: Find and execute mate-in-1 puzzle (15s timer, strategy-based)
 
 5. **Scoring**:
    - Points earned = total savings (base price - purchase price)
@@ -439,8 +441,32 @@ All CAPTCHA modules export:
 - Canvas-based rendering with smooth 60fps animation
 - Tests timing, reflex, and precision (different from Tanks' physics-based aiming)
 
+**9. Chess Checkmate CAPTCHA** (`chessCaptcha.js`)
+- Strategic puzzle: find and execute a mate-in-1 chess position
+- 400x400px canvas displaying full 8x8 chess board with Unicode chess pieces (♔♕♖♗♘♙♚♛♜♝♞♟)
+- Classic board colors: light squares (#f0d9b5), dark squares (#b58863)
+- Pre-defined set of 8 classic mate-in-1 patterns:
+  - Back Rank Mate (rook delivers mate on 8th rank)
+  - Smothered Mate (knight delivers mate with queen support)
+  - Anastasia's Mate (rook and knight trap king on edge)
+  - Fool's Mate (queen delivers quick checkmate)
+  - Arabian Mate (rook and knight in corner)
+  - Queen Mate (simple queen and king endgame)
+  - Scholar's Mate (queen on f7 with bishop support)
+  - Ladder Mate (two rooks drive king to edge)
+- Random puzzle selected each time for variety
+- Two-click interaction: click piece to select (highlights in yellow), click destination to move
+- Shows valid move indicators (green circles) for selected piece
+- Simplified move validation (supports king, queen, rook, bishop, knight, pawn basic moves)
+- Must execute the exact checkmate move to succeed (legal moves that aren't checkmate fail with "Not the checkmate move!")
+- Reset button allows player to undo mistakes and try again
+- 15-second timer
+- Multiple attempts allowed until time runs out or success
+- Canvas-based rendering with clear visual feedback
+- Tests logic, strategy, and chess knowledge (unique among all CAPTCHAs - no reflex/timing required)
+
 ### CAPTCHA Selection Logic
-Random selection on checkout, weighted equally (12.5% chance each for 8 types). Can be modified in checkout logic if certain CAPTCHAs should appear more/less frequently.
+Random selection on checkout, weighted equally (11.1% chance each for 9 types). Can be modified in checkout logic if certain CAPTCHAs should appear more/less frequently.
 
 ### HOW TO CREATE A NEW CAPTCHA (Step-by-Step Pattern)
 

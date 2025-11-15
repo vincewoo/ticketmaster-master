@@ -39,6 +39,7 @@ export const gameState = {
     gridColumns: SEAT_COLS, // Default to 12 columns
     totalSeats: TOTAL_SEATS, // Default to 96 seats
     opponentGridConfig: null, // Opponent's grid configuration
+    currentGridColumns: SEAT_COLS, // Current display grid columns (updates with responsive layout)
 
     // Gas pump CAPTCHA state
     gasPumpInterval: null,

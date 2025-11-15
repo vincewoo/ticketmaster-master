@@ -2,7 +2,7 @@
 
 // Import core modules
 import { gameState } from './gameState.js';
-import { getGridConfig, applyGridLayout } from './config.js';
+import { getGridConfig, applyGridLayout, getCurrentGridColumns } from './config.js';
 import { generateSeats, renderSeats, updateSeatAvailability, updateSeatPrices, getPriceColor } from './seatManagement.js';
 import { areSeatsAdjacent, hasOverlappingSeats, handleSeatClick, removeSeatFromCart, updateCart } from './cartManagement.js';
 import { generateTargetTicketCount, generateEventTimes, initiateCheckout, completeCheckout, skipTarget } from './checkout.js';
@@ -19,6 +19,7 @@ import { showNBACaptcha, handleNBAShoot, cancelNBACaptcha } from './captcha/nbaC
 import { showLunarLanderCAPTCHA } from './captcha/lunarLanderCaptcha.js';
 import { showCAPTCHA as showTanksCaptcha } from './captcha/tanksCaptcha.js';
 import { showCAPTCHA as showDartsCaptcha } from './captcha/dartsCaptcha.js';
+import { showCAPTCHA as showChessCaptcha } from './captcha/chessCaptcha.js';
 
 // Export all functions to window for global access
 // Core game flow
@@ -110,10 +111,35 @@ window.showTanksCaptcha = showTanksCaptcha;
 // Darts CAPTCHA
 window.showDartsCaptcha = showDartsCaptcha;
 
+// Chess CAPTCHA
+window.showChessCaptcha = showChessCaptcha;
+
 // Export gameState for debugging
 window.gameState = gameState;
+
+/**
+ * Update current grid columns based on window size
+ * Called on resize to keep validation in sync with responsive layout
+ */
+function updateCurrentGridColumns() {
+    gameState.currentGridColumns = getCurrentGridColumns();
+    // Re-render cart validation if cart has items
+    if (gameState.cart.length > 0 && window.updateCart) {
+        window.updateCart();
+    }
+}
 
 // Initialize game when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     initGame();
+    // Set initial grid columns
+    updateCurrentGridColumns();
+
+    // Update grid columns on window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        // Debounce resize events to avoid excessive recalculations
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(updateCurrentGridColumns, 100);
+    });
 });
