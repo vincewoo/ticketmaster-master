@@ -524,15 +524,14 @@ export function showCAPTCHA() {
 
             // Draw ball number/design
             if (!ball.isCueBall) {
-                if (ball.isEightBall) {
-                    // Draw white circle for 8-ball
-                    ctx.fillStyle = '#ffffff';
-                    ctx.beginPath();
-                    ctx.arc(ball.x, ball.y, ball.radius * 0.6, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+                // Draw white circle for 8-ball and 3-ball
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+
                 // Draw number
-                ctx.fillStyle = ball.isEightBall ? '#000000' : '#ffffff';
+                ctx.fillStyle = ball.color; // Use ball color for number (black for 8-ball, red for 3-ball)
                 ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
