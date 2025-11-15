@@ -6,7 +6,7 @@ import { hasOverlappingSeats } from '../cartManagement.js';
 let minesweeperState = null;
 
 // Constants
-const TIMER_DURATION = 15;
+const TIMER_DURATION = 10;
 const GRID_SIZE = 5; // 5x5 grid
 const CELL_SIZE = 60;
 
