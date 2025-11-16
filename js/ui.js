@@ -149,4 +149,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugBlackjackCaptcha = document.getElementById('debug-blackjack-captcha');
+    if (debugBlackjackCaptcha) {
+        debugBlackjackCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showBlackjackCaptcha) {
+                window.showBlackjackCaptcha();
+            }
+        });
+    }
 }
