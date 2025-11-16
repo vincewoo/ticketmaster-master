@@ -20,8 +20,10 @@ def verify_snake_captcha():
         page.keyboard.press('`')
         expect(page.locator('#debug-panel')).to_be_visible()
 
-        # Click the snake captcha button, forcing the click even if it's not in view
-        page.click('#debug-snake-captcha', force=True)
+        # Scroll the debug panel into view and click the snake captcha button
+        snake_button = page.locator('#debug-snake-captcha')
+        snake_button.scroll_into_view_if_needed()
+        snake_button.click()
 
         expect(page.locator('#snake-captcha-modal')).to_be_visible()
 
