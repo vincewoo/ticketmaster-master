@@ -158,4 +158,13 @@ export function setupDebugPanel() {
             }
         });
     }
+
+    const debugSnakeCaptcha = document.getElementById('debug-snake-captcha');
+    if (debugSnakeCaptcha) {
+        debugSnakeCaptcha.addEventListener('click', () => {
+            if (gameState.isRunning && window.showSnakeCaptcha) {
+                window.showSnakeCaptcha();
+            }
+        });
+    }
 }

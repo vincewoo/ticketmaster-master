@@ -72,7 +72,8 @@ export function initiateCheckout() {
         window.showPoolCaptcha,
         window.showSimonCaptcha,
         window.showMinesweeperCaptcha,
-        window.showBlackjackCaptcha
+        window.showBlackjackCaptcha,
+        window.showSnakeCaptcha
     ];
 
     // Always show CAPTCHA if competing with opponent for same seats
