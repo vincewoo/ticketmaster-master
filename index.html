@@ -482,6 +482,37 @@
             </div>
         </div>
 
+        <!-- Blackjack CAPTCHA Modal -->
+        <div id="blackjack-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Win a hand of Blackjack to prove you're human!</p>
+                <div id="blackjack-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="blackjack-game-container">
+                    <div class="blackjack-table">
+                        <div class="blackjack-hand-container">
+                            <h3 class="blackjack-hand-title">Dealer's Hand (<span id="blackjack-dealer-score">0</span>)</h3>
+                            <div id="blackjack-dealer-hand" class="blackjack-hand"></div>
+                        </div>
+                        <div id="blackjack-feedback" class="blackjack-feedback"></div>
+                        <div class="blackjack-hand-container">
+                            <h3 class="blackjack-hand-title">Your Hand (<span id="blackjack-player-score">0</span>)</h3>
+                            <div id="blackjack-player-hand" class="blackjack-hand"></div>
+                        </div>
+                    </div>
+                    <div id="blackjack-actions" class="blackjack-actions">
+                        <button id="blackjack-hit-btn" class="btn-primary">Hit</button>
+                        <button id="blackjack-stand-btn" class="btn-secondary">Stand</button>
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="blackjack-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -627,6 +658,7 @@
                     <button id="debug-pool-captcha" class="debug-btn">Pool Game</button>
                     <button id="debug-simon-captcha" class="debug-btn">Simon Says</button>
                     <button id="debug-minesweeper-captcha" class="debug-btn">Minesweeper</button>
+                    <button id="debug-blackjack-captcha" class="debug-btn">Blackjack</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>
