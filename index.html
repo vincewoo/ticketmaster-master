@@ -513,6 +513,37 @@
             </div>
         </div>
 
+        <!-- Snake CAPTCHA Modal -->
+        <div id="snake-captcha-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Security Verification</h2>
+                <p>Eat 2 blocks to prove you're human!</p>
+                <div id="snake-captcha-warning" class="captcha-warning hidden">
+                    ⚠️ Warning: Another player is competing for these seats!
+                </div>
+                <div class="snake-game-container">
+                    <div class="snake-phone">
+                        <div class="snake-phone-screen">
+                            <canvas id="snake-canvas" width="300" height="200"></canvas>
+                            <div id="snake-score" class="snake-score">Score: 0 / 2</div>
+                        </div>
+                    </div>
+                    <div class="snake-controls">
+                        <button id="snake-up-btn" class="snake-control-btn">▲</button>
+                        <div class="snake-controls-row">
+                            <button id="snake-left-btn" class="snake-control-btn">◄</button>
+                            <button id="snake-right-btn" class="snake-control-btn">►</button>
+                        </div>
+                        <button id="snake-down-btn" class="snake-control-btn">▼</button>
+                    </div>
+                </div>
+                <div class="captcha-buttons">
+                    <button id="snake-cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+                <div id="snake-feedback" class="captcha-error"></div>
+            </div>
+        </div>
+
         <!-- Game Over Modal -->
         <div id="gameover-modal" class="modal hidden">
             <div class="modal-content gameover-content">
@@ -659,6 +690,7 @@
                     <button id="debug-simon-captcha" class="debug-btn">Simon Says</button>
                     <button id="debug-minesweeper-captcha" class="debug-btn">Minesweeper</button>
                     <button id="debug-blackjack-captcha" class="debug-btn">Blackjack</button>
+                    <button id="debug-snake-captcha" class="debug-btn">Snake</button>
                 </div>
                 <div class="debug-info">
                     <p><strong>Toggle:</strong> Press <kbd>`</kbd> key</p>
@@ -669,5 +701,6 @@
     </div>
 
     <script type="module" src="js/main.js"></script>
+    <script src="js/captcha/snakeCaptcha.js"></script>
 </body>
 </html>
