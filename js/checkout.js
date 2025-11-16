@@ -48,6 +48,25 @@ export function generateEventTimes() {
     };
 }
 
+// Array of all available CAPTCHA functions
+const captchaFunctions = [
+    window.showCaptcha,
+    window.showGasPumpCaptcha,
+    window.showPuzzleCaptcha,
+    window.showFishingCaptcha,
+    window.showNBACaptcha,
+    window.showLunarLanderCaptcha,
+    window.showTanksCaptcha,
+    window.showDartsCaptcha,
+    window.showChessCaptcha,
+    window.showFlappyBirdCaptcha,
+    window.showSkiFreeCaptcha,
+    window.showPoolCaptcha,
+    window.showSimonCaptcha,
+    window.showMinesweeperCaptcha,
+    window.showBlackjackCaptcha
+];
+
 /**
  * Initiate checkout process
  * Decides whether to show CAPTCHA or complete directly
@@ -60,39 +79,16 @@ export function initiateCheckout() {
 
     // Otherwise 60% chance of CAPTCHA
     if (hasCompetition || Math.random() < 0.6) {
-        // Randomly choose between all CAPTCHA types (14 total)
-        const captchaType = Math.random();
-        if (captchaType < 0.0714) {
-            if (window.showCaptcha) window.showCaptcha();
-        } else if (captchaType < 0.1429) {
-            if (window.showGasPumpCaptcha) window.showGasPumpCaptcha();
-        } else if (captchaType < 0.2143) {
-            if (window.showPuzzleCaptcha) window.showPuzzleCaptcha();
-        } else if (captchaType < 0.2857) {
-            if (window.showFishingCaptcha) window.showFishingCaptcha();
-        } else if (captchaType < 0.3571) {
-            if (window.showNBACaptcha) window.showNBACaptcha();
-        } else if (captchaType < 0.4286) {
-            if (window.showLunarLanderCaptcha) window.showLunarLanderCaptcha();
-        } else if (captchaType < 0.5000) {
-            if (window.showTanksCaptcha) window.showTanksCaptcha();
-        } else if (captchaType < 0.5714) {
-            if (window.showDartsCaptcha) window.showDartsCaptcha();
-        } else if (captchaType < 0.6429) {
-            if (window.showChessCaptcha) window.showChessCaptcha();
-        } else if (captchaType < 0.7143) {
-            if (window.showFlappyBirdCaptcha) window.showFlappyBirdCaptcha();
-        } else if (captchaType < 0.7857) {
-            if (window.showSkiFreeCaptcha) window.showSkiFreeCaptcha();
-        } else if (captchaType < 0.8571) {
-            if (window.showPoolCaptcha) window.showPoolCaptcha();
-        } else if (captchaType < 0.9286) {
-            if (window.showSimonCaptcha) window.showSimonCaptcha();
-        } else if (captchaType < 0.9333) {
-            if (window.showMinesweeperCaptcha) window.showMinesweeperCaptcha();
-        }
-        else {
-            if (window.showBlackjackCaptcha) window.showBlackjackCaptcha();
+        // Filter out any undefined functions before selecting
+        const availableCaptchas = captchaFunctions.filter(fn => typeof fn === 'function');
+        if (availableCaptchas.length > 0) {
+            // Randomly choose a CAPTCHA function from the array
+            const randomIndex = Math.floor(Math.random() * availableCaptchas.length);
+            const selectedCaptcha = availableCaptchas[randomIndex];
+            selectedCaptcha();
+        } else {
+            // Fallback if no CAPTCHAs are available for some reason
+            completeCheckout();
         }
     } else {
         completeCheckout();
