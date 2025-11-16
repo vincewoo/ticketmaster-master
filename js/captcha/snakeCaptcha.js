@@ -60,7 +60,7 @@ function update() {
     }
 
     if (checkCollision(head)) {
-        endGame(false);
+        endSnakeGame(false);
         return;
     }
 
@@ -70,7 +70,7 @@ function update() {
         snakeGameState.score++;
         updateScore();
         if (snakeGameState.score >= 2) {
-            endGame(true);
+            endSnakeGame(true);
         } else {
             generateFood();
         }
@@ -163,7 +163,7 @@ function updateScore() {
     document.getElementById('snake-score').textContent = `Score: ${snakeGameState.score} / 2`;
 }
 
-function endGame(isSuccess) {
+function endSnakeGame(isSuccess) {
     snakeGameState.gameOver = true;
     clearInterval(snakeGameState.gameLoop);
 
