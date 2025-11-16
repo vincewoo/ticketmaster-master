@@ -558,6 +558,34 @@ export function setupEventListeners() {
         });
     }
 
+    // Blackjack CAPTCHA buttons
+    const blackjackHitBtn = document.getElementById('blackjack-hit-btn');
+    if (blackjackHitBtn) {
+        blackjackHitBtn.addEventListener('click', () => {
+            if (window.handleBlackjackHit) {
+                window.handleBlackjackHit();
+            }
+        });
+    }
+
+    const blackjackStandBtn = document.getElementById('blackjack-stand-btn');
+    if (blackjackStandBtn) {
+        blackjackStandBtn.addEventListener('click', () => {
+            if (window.handleBlackjackStand) {
+                window.handleBlackjackStand();
+            }
+        });
+    }
+
+    const blackjackCancelBtn = document.getElementById('blackjack-cancel-btn');
+    if (blackjackCancelBtn) {
+        blackjackCancelBtn.addEventListener('click', () => {
+            if (window.cancelBlackjackCaptcha) {
+                window.cancelBlackjackCaptcha();
+            }
+        });
+    }
+
     // Debug panel
     if (window.setupDebugPanel) {
         window.setupDebugPanel();
