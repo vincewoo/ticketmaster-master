@@ -213,6 +213,7 @@ export function showCAPTCHA() {
     // Draw the grid
     function drawGrid() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const BORDER_WIDTH = 3;
 
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
@@ -223,65 +224,94 @@ export function showCAPTCHA() {
                 const px = x * CELL_SIZE;
                 const py = y * CELL_SIZE;
 
+                // The logic is now split between revealed and unrevealed cells.
                 if (revealed) {
-                    // Draw revealed cell
-                    ctx.fillStyle = '#ddd';
-                    ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
-                    ctx.strokeStyle = '#999';
-                    ctx.strokeRect(px, py, CELL_SIZE, CELL_SIZE);
+                    // A cell is marked as "failed" if it's the hidden mine that the user
+                    // clicked on to lose the game.
+                    const isFailedMine = cell.mine &&
+                                         x === minesweeperState.minePosition.x &&
+                                         y === minesweeperState.minePosition.y &&
+                                         minesweeperState.gameOver &&
+                                         !gameState.isSolved; // Check isSolved for success state
 
+                    // 1. Draw the background color. Red for the failed mine, grey otherwise.
+                    ctx.fillStyle = isFailedMine ? 'red' : '#C0C0C0';
+                    ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+
+                    // 2. Draw the sunken border for all revealed cells.
+                    ctx.strokeStyle = '#7B7B7B';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(px + 0.5, py + 0.5, CELL_SIZE - 1, CELL_SIZE - 1);
+
+                    // 3. Draw the cell's content (mine or number).
                     if (cell.mine) {
-                        // Draw mine
+                        // Draw mine body
                         ctx.fillStyle = '#000';
+                        const centerX = px + CELL_SIZE / 2;
+                        const centerY = py + CELL_SIZE / 2;
                         ctx.beginPath();
-                        ctx.arc(px + CELL_SIZE / 2, py + CELL_SIZE / 2, 15, 0, Math.PI * 2);
+                        ctx.arc(centerX, centerY, CELL_SIZE * 0.25, 0, Math.PI * 2);
                         ctx.fill();
 
-                        // Draw spikes
+                        // Draw mine spikes
                         ctx.strokeStyle = '#000';
-                        ctx.lineWidth = 2;
-                        for (let i = 0; i < 8; i++) {
-                            const angle = (i * Math.PI) / 4;
-                            const x1 = px + CELL_SIZE / 2 + Math.cos(angle) * 10;
-                            const y1 = py + CELL_SIZE / 2 + Math.sin(angle) * 10;
-                            const x2 = px + CELL_SIZE / 2 + Math.cos(angle) * 20;
-                            const y2 = py + CELL_SIZE / 2 + Math.sin(angle) * 20;
+                        ctx.lineWidth = 3;
+                        const spikes = 8;
+                        const spikeLength = CELL_SIZE * 0.45;
+                        const startRadius = CELL_SIZE * 0.25;
+                        for (let i = 0; i < spikes; i++) {
+                            const angle = (i / spikes) * Math.PI * 2;
                             ctx.beginPath();
-                            ctx.moveTo(x1, y1);
-                            ctx.lineTo(x2, y2);
+                            ctx.moveTo(
+                                centerX + Math.cos(angle) * startRadius,
+                                centerY + Math.sin(angle) * startRadius
+                            );
+                            ctx.lineTo(
+                                centerX + Math.cos(angle) * spikeLength,
+                                centerY + Math.sin(angle) * spikeLength
+                            );
                             ctx.stroke();
                         }
                     } else if (cell.number > 0) {
                         // Draw number
-                        const colors = ['', '#0000ff', '#008000', '#ff0000', '#000080', '#800000', '#008080', '#000000', '#808080'];
+                        const colors = [
+                            '', '#0000FF', '#007B00', '#FF0000', '#00007B',
+                            '#7B0000', '#007B7B', '#000000', '#7B7B7B'
+                        ];
                         ctx.fillStyle = colors[cell.number];
-                        ctx.font = 'bold 24px Arial';
+                        ctx.font = `bold ${CELL_SIZE * 0.5}px "Courier New", monospace`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText(cell.number, px + CELL_SIZE / 2, py + CELL_SIZE / 2);
                     }
                 } else {
-                    // Draw unrevealed cell
-                    ctx.fillStyle = '#bbb';
+                    // Draw unrevealed cell with a 3D bevel effect
+                    ctx.fillStyle = '#C0C0C0';
                     ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
-                    ctx.strokeStyle = '#999';
-                    ctx.strokeRect(px, py, CELL_SIZE, CELL_SIZE);
 
-                    // Draw 3D effect
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 2;
+                    // Lighter border (top and left)
+                    ctx.fillStyle = '#FFFFFF';
                     ctx.beginPath();
                     ctx.moveTo(px, py + CELL_SIZE);
                     ctx.lineTo(px, py);
                     ctx.lineTo(px + CELL_SIZE, py);
-                    ctx.stroke();
+                    ctx.lineTo(px + CELL_SIZE - BORDER_WIDTH, py + BORDER_WIDTH);
+                    ctx.lineTo(px + BORDER_WIDTH, py + BORDER_WIDTH);
+                    ctx.lineTo(px + BORDER_WIDTH, py + CELL_SIZE - BORDER_WIDTH);
+                    ctx.closePath();
+                    ctx.fill();
 
-                    ctx.strokeStyle = '#888';
+                    // Darker border (bottom and right)
+                    ctx.fillStyle = '#7B7B7B';
                     ctx.beginPath();
-                    ctx.moveTo(px + CELL_SIZE, py);
+                    ctx.moveTo(px, py + CELL_SIZE);
                     ctx.lineTo(px + CELL_SIZE, py + CELL_SIZE);
-                    ctx.lineTo(px, py + CELL_SIZE);
-                    ctx.stroke();
+                    ctx.lineTo(px + CELL_SIZE, py);
+                    ctx.lineTo(px + CELL_SIZE - BORDER_WIDTH, py + BORDER_WIDTH);
+                    ctx.lineTo(px + CELL_SIZE - BORDER_WIDTH, py + CELL_SIZE - BORDER_WIDTH);
+                    ctx.lineTo(px + BORDER_WIDTH, py + CELL_SIZE - BORDER_WIDTH);
+                    ctx.closePath();
+                    ctx.fill();
                 }
             }
         }
