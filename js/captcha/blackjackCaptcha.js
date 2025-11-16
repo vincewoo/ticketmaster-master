@@ -2,7 +2,7 @@
 import { gameState } from '../gameState.js';
 import { hasOverlappingSeats } from '../cartManagement.js';
 import { completeCheckout } from '../checkout.js';
-import { showModal, hideModal } from '../ui.js';
+import { showModal, hideModal } from '../gameFlow.js';
 
 export function showBlackjackCaptcha() {
     // Check if opponent has overlapping seats in multiplayer
