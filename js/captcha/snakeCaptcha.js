@@ -21,9 +21,31 @@ function initSnake() {
     document.addEventListener('keydown', handleKeyPress);
 }
 
+const snakeLayouts = [
+    [
+        { x: 11, y: 3 }, { x: 10, y: 3 }, { x: 9, y: 3 }, { x: 8, y: 3 },
+        { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 6, y: 6 },
+        { x: 5, y: 6 }, { x: 4, y: 6 }, { x: 3, y: 6 }, { x: 2, y: 6 },
+        { x: 2, y: 5 }, { x: 2, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 2 }
+    ],
+    [
+        { x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 }, { x: 5, y: 2 },
+        { x: 6, y: 2 }, { x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 },
+        { x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }, { x: 2, y: 5 },
+        { x: 2, y: 6 }, { x: 2, y: 7 }, { x: 3, y: 7 }, { x: 4, y: 7 }
+    ],
+    [
+        { x: 13, y: 5 }, { x: 13, y: 4 }, { x: 13, y: 3 }, { x: 12, y: 3 },
+        { x: 11, y: 3 }, { x: 10, y: 3 }, { x: 9, y: 3 }, { x: 8, y: 3 },
+        { x: 8, y: 4 }, { x: 8, y: 5 }, { x: 8, y: 6 }, { x: 8, y: 7 },
+        { x: 9, y: 7 }, { x: 10, y: 7 }, { x: 11, y: 7 }, { x: 12, y: 7 }
+    ]
+];
+
 function startSnakeGame() {
+    const layout = snakeLayouts[Math.floor(Math.random() * snakeLayouts.length)];
     snakeGameState = {
-        snake: [{ x: 8, y: 5 }, { x: 7, y: 5 }, { x: 6, y: 5 }, { x: 5, y: 5 }],
+        snake: JSON.parse(JSON.stringify(layout)), // Deep copy the layout
         food: {},
         direction: 'right',
         nextDirection: 'right',
@@ -100,12 +122,47 @@ function generateFood() {
             x: Math.floor(Math.random() * (CANVAS_WIDTH / GRID_SIZE)),
             y: Math.floor(Math.random() * (CANVAS_HEIGHT / GRID_SIZE)),
         };
-    } while (isPositionOnSnake(foodPosition));
+    } while (isPositionOnSnake(foodPosition) || !isWinnable(foodPosition));
     snakeGameState.food = foodPosition;
 }
 
 function isPositionOnSnake(position) {
     return snakeGameState.snake.some(segment => segment.x === position.x && segment.y === position.y);
+}
+
+function isWinnable(foodPosition) {
+    const head = snakeGameState.snake[0];
+    const queue = [[head]];
+    const visited = new Set([`${head.x},${head.y}`]);
+    const directions = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }];
+
+    while (queue.length > 0) {
+        const path = queue.shift();
+        const { x, y } = path[path.length - 1];
+
+        if (x === foodPosition.x && y === foodPosition.y) {
+            return true;
+        }
+
+        for (const direction of directions) {
+            const newX = x + direction.x;
+            const newY = y + direction.y;
+            const newPos = { x: newX, y: newY };
+
+            if (
+                newX >= 0 && newX < CANVAS_WIDTH / GRID_SIZE &&
+                newY >= 0 && newY < CANVAS_HEIGHT / GRID_SIZE &&
+                !isPositionOnSnake(newPos) &&
+                !visited.has(`${newX},${newY}`)
+            ) {
+                visited.add(`${newX},${newY}`);
+                const newPath = [...path, newPos];
+                queue.push(newPath);
+            }
+        }
+    }
+
+    return false;
 }
 
 function checkCollision(head) {
