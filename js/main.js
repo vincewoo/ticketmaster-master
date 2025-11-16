@@ -25,6 +25,7 @@ import { showCAPTCHA as showSkiFreeCaptcha } from './captcha/skiFreeCaptcha.js';
 import { showCAPTCHA as showPoolCaptcha } from './captcha/poolCaptcha.js';
 import { showCAPTCHA as showSimonCaptcha } from './captcha/simonCaptcha.js';
 import { showCAPTCHA as showMinesweeperCaptcha } from './captcha/minesweeper.js';
+import { showBlackjackCaptcha, handleBlackjackHit, handleBlackjackStand, cancelBlackjackCaptcha } from './captcha/blackjackCaptcha.js';
 
 // Export all functions to window for global access
 // Core game flow
@@ -133,6 +134,13 @@ window.showSimonCaptcha = showSimonCaptcha;
 
 // Minesweeper CAPTCHA
 window.showMinesweeperCaptcha = showMinesweeperCaptcha;
+
+// Blackjack CAPTCHA
+window.showBlackjackCaptcha = showBlackjackCaptcha;
+window.handleBlackjackHit = handleBlackjackHit;
+window.handleBlackjackStand = handleBlackjackStand;
+window.cancelBlackjackCaptcha = cancelBlackjackCaptcha;
+
 
 // Export gameState for debugging
 window.gameState = gameState;
