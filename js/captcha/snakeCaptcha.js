@@ -17,36 +17,86 @@ function initSnake() {
     document.getElementById('snake-left-btn').addEventListener('click', () => setDirection('left'));
     document.getElementById('snake-right-btn').addEventListener('click', () => setDirection('right'));
     document.getElementById('snake-cancel-btn').addEventListener('click', cancelSnakeCaptcha);
+    document.getElementById('snake-start-btn').addEventListener('click', startGameLoop);
 }
 
 const snakeLayouts = [
-    [
-        { x: 11, y: 3 }, { x: 10, y: 3 }, { x: 9, y: 3 }, { x: 8, y: 3 },
-        { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 6, y: 5 },
-        { x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }, { x: 2, y: 5 },
-        { x: 2, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 2 }
-    ],
-    [
-        { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 }, { x: 5, y: 5 },
-        { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 },
-        { x: 5, y: 2 }, { x: 4, y: 2 }, { x: 3, y: 2 }, { x: 2, y: 2 },
-        { x: 2, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 }
-    ],
-    [
-        { x: 13, y: 5 }, { x: 12, y: 5 }, { x: 11, y: 5 }, { x: 10, y: 5 },
-        { x: 9, y: 5 }, { x: 8, y: 5 }, { x: 8, y: 4 }, { x: 8, y: 3 },
-        { x: 9, y: 3 }, { x: 10, y: 3 }, { x: 11, y: 3 }, { x: 12, y: 3 },
-        { x: 13, y: 3 }, { x: 13, y: 4 }, { x: 12, y: 4 }, { x: 11, y: 4 }
-    ]
+    {
+        direction: 'right',
+        layout: [
+            { x: 11, y: 3 }, { x: 10, y: 3 }, { x: 9, y: 3 }, { x: 8, y: 3 },
+            { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 6, y: 5 },
+            { x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }, { x: 2, y: 5 },
+            { x: 2, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 2 }
+        ]
+    },
+    {
+        direction: 'right',
+        layout: [
+            { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 }, { x: 5, y: 5 },
+            { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 },
+            { x: 5, y: 2 }, { x: 4, y: 2 }, { x: 3, y: 2 }, { x: 2, y: 2 },
+            { x: 2, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 }
+        ]
+    },
+    {
+        direction: 'right',
+        layout: [
+            { x: 13, y: 5 }, { x: 12, y: 5 }, { x: 11, y: 5 }, { x: 10, y: 5 },
+            { x: 9, y: 5 }, { x: 8, y: 5 }, { x: 8, y: 4 }, { x: 8, y: 3 },
+            { x: 9, y: 3 }, { x: 10, y: 3 }, { x: 11, y: 3 }, { x: 12, y: 3 },
+            { x: 13, y: 3 }, { x: 13, y: 4 }, { x: 12, y: 4 }, { x: 11, y: 4 }
+        ]
+    }
 ];
 
 function startSnakeGame() {
-    const layout = snakeLayouts[Math.floor(Math.random() * snakeLayouts.length)];
+    let layout;
+    let direction = 'right'; // Default direction
+    let validLayoutFound = false;
+
+    // Shuffle layouts to try a random one first
+    const shuffledLayouts = [...snakeLayouts].sort(() => 0.5 - Math.random());
+
+    for (const layoutConfig of shuffledLayouts) {
+        if (isValidStartPosition(layoutConfig.layout, layoutConfig.direction)) {
+            layout = layoutConfig.layout;
+            direction = layoutConfig.direction;
+            validLayoutFound = true;
+            break;
+        }
+    }
+
+    if (!validLayoutFound) {
+        // Fallback: Generate a new random, valid snake if no predefined layout works
+        let newSnake, newDirection;
+        do {
+            newDirection = ['up', 'down', 'left', 'right'][Math.floor(Math.random() * 4)];
+            const head = {
+                x: Math.floor(Math.random() * (CANVAS_WIDTH / GRID_SIZE)),
+                y: Math.floor(Math.random() * (CANVAS_HEIGHT / GRID_SIZE))
+            };
+            newSnake = [head];
+            let dx = 0, dy = 0;
+            if (newDirection === 'up') dy = 1;
+            else if (newDirection === 'down') dy = -1;
+            else if (newDirection === 'left') dx = 1;
+            else if (newDirection === 'right') dx = -1;
+
+            for (let i = 1; i < 4; i++) {
+                newSnake.push({ x: head.x + i * dx, y: head.y + i * dy });
+            }
+        } while (!isValidStartPosition(newSnake, newDirection));
+
+        layout = newSnake;
+        direction = newDirection;
+    }
+
     snakeGameState = {
-        snake: JSON.parse(JSON.stringify(layout)), // Deep copy the layout
+        snake: JSON.parse(JSON.stringify(layout)),
         food: {},
-        direction: 'right',
-        nextDirection: 'right',
+        direction: direction,
+        nextDirection: direction,
         score: 0,
         gameOver: false,
         gameLoop: null,
@@ -55,6 +105,12 @@ function startSnakeGame() {
     generateFood();
     updateScore();
 
+    draw(); // Draw initial state
+}
+
+function startGameLoop() {
+    if (snakeGameState.gameLoop) return; // Prevent multiple starts
+    document.getElementById('snake-start-btn').disabled = true;
     snakeGameState.gameLoop = setInterval(gameLoop, 150);
 }
 
@@ -124,8 +180,31 @@ function generateFood() {
     snakeGameState.food = foodPosition;
 }
 
-function isPositionOnSnake(position) {
-    return snakeGameState.snake.some(segment => segment.x === position.x && segment.y === position.y);
+function isPositionOnSnake(position, snake = snakeGameState.snake) {
+    return snake.some(segment => segment.x === position.x && segment.y === position.y);
+}
+
+function isValidStartPosition(snake, direction) {
+    const head = snake[0];
+    let dx = 0, dy = 0;
+
+    if (direction === 'up') dy = -1;
+    else if (direction === 'down') dy = 1;
+    else if (direction === 'left') dx = -1;
+    else if (direction === 'right') dx = 1;
+
+    for (let i = 1; i <= 6; i++) {
+        const nextPos = { x: head.x + i * dx, y: head.y + i * dy };
+
+        if (nextPos.x < 0 || nextPos.x >= CANVAS_WIDTH / GRID_SIZE || nextPos.y < 0 || nextPos.y >= CANVAS_HEIGHT / GRID_SIZE) {
+            return false;
+        }
+
+        if (isPositionOnSnake(nextPos, snake)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function isWinnable(foodPosition) {
@@ -258,6 +337,7 @@ function showSnakeCaptcha() {
     }
 
     document.getElementById('snake-feedback').textContent = '';
+    document.getElementById('snake-start-btn').disabled = false;
     document.addEventListener('keydown', handleKeyPress);
     showModal('snake-captcha-modal');
     startSnakeGame();
