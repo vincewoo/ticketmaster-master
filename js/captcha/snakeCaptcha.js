@@ -17,28 +17,26 @@ function initSnake() {
     document.getElementById('snake-left-btn').addEventListener('click', () => setDirection('left'));
     document.getElementById('snake-right-btn').addEventListener('click', () => setDirection('right'));
     document.getElementById('snake-cancel-btn').addEventListener('click', cancelSnakeCaptcha);
-
-    document.addEventListener('keydown', handleKeyPress);
 }
 
 const snakeLayouts = [
     [
         { x: 11, y: 3 }, { x: 10, y: 3 }, { x: 9, y: 3 }, { x: 8, y: 3 },
-        { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 6, y: 6 },
-        { x: 5, y: 6 }, { x: 4, y: 6 }, { x: 3, y: 6 }, { x: 2, y: 6 },
-        { x: 2, y: 5 }, { x: 2, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 2 }
-    ],
-    [
-        { x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 }, { x: 5, y: 2 },
-        { x: 6, y: 2 }, { x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 },
+        { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 6, y: 5 },
         { x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }, { x: 2, y: 5 },
-        { x: 2, y: 6 }, { x: 2, y: 7 }, { x: 3, y: 7 }, { x: 4, y: 7 }
+        { x: 2, y: 4 }, { x: 2, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 2 }
     ],
     [
-        { x: 13, y: 5 }, { x: 13, y: 4 }, { x: 13, y: 3 }, { x: 12, y: 3 },
-        { x: 11, y: 3 }, { x: 10, y: 3 }, { x: 9, y: 3 }, { x: 8, y: 3 },
-        { x: 8, y: 4 }, { x: 8, y: 5 }, { x: 8, y: 6 }, { x: 8, y: 7 },
-        { x: 9, y: 7 }, { x: 10, y: 7 }, { x: 11, y: 7 }, { x: 12, y: 7 }
+        { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 }, { x: 5, y: 5 },
+        { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 },
+        { x: 5, y: 2 }, { x: 4, y: 2 }, { x: 3, y: 2 }, { x: 2, y: 2 },
+        { x: 2, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 }, { x: 4, y: 4 }
+    ],
+    [
+        { x: 13, y: 5 }, { x: 12, y: 5 }, { x: 11, y: 5 }, { x: 10, y: 5 },
+        { x: 9, y: 5 }, { x: 8, y: 5 }, { x: 8, y: 4 }, { x: 8, y: 3 },
+        { x: 9, y: 3 }, { x: 10, y: 3 }, { x: 11, y: 3 }, { x: 12, y: 3 },
+        { x: 13, y: 3 }, { x: 13, y: 4 }, { x: 12, y: 4 }, { x: 11, y: 4 }
     ]
 ];
 
@@ -223,6 +221,8 @@ function updateScore() {
 function endSnakeGame(isSuccess) {
     snakeGameState.gameOver = true;
     clearInterval(snakeGameState.gameLoop);
+    document.removeEventListener('keydown', handleKeyPress);
+    snakeGameState = {};
 
     const feedback = document.getElementById('snake-feedback');
     if (isSuccess) {
@@ -244,6 +244,8 @@ function endSnakeGame(isSuccess) {
 function cancelSnakeCaptcha() {
     snakeGameState.gameOver = true;
     clearInterval(snakeGameState.gameLoop);
+    document.removeEventListener('keydown', handleKeyPress);
+    snakeGameState = {};
     hideModal('snake-captcha-modal');
 }
 
@@ -256,6 +258,7 @@ function showSnakeCaptcha() {
     }
 
     document.getElementById('snake-feedback').textContent = '';
+    document.addEventListener('keydown', handleKeyPress);
     showModal('snake-captcha-modal');
     startSnakeGame();
 }
