@@ -88,8 +88,11 @@ export function initiateCheckout() {
             if (window.showPoolCaptcha) window.showPoolCaptcha();
         } else if (captchaType < 0.9286) {
             if (window.showSimonCaptcha) window.showSimonCaptcha();
-        } else {
+        } else if (captchaType < 0.9333) {
             if (window.showMinesweeperCaptcha) window.showMinesweeperCaptcha();
+        }
+        else {
+            if (window.showBlackjackCaptcha) window.showBlackjackCaptcha();
         }
     } else {
         completeCheckout();
