@@ -48,31 +48,32 @@ export function generateEventTimes() {
     };
 }
 
-// Array of all available CAPTCHA functions
-const captchaFunctions = [
-    window.showCaptcha,
-    window.showGasPumpCaptcha,
-    window.showPuzzleCaptcha,
-    window.showFishingCaptcha,
-    window.showNBACaptcha,
-    window.showLunarLanderCaptcha,
-    window.showTanksCaptcha,
-    window.showDartsCaptcha,
-    window.showChessCaptcha,
-    window.showFlappyBirdCaptcha,
-    window.showSkiFreeCaptcha,
-    window.showPoolCaptcha,
-    window.showSimonCaptcha,
-    window.showMinesweeperCaptcha,
-    window.showBlackjackCaptcha
-];
-
 /**
  * Initiate checkout process
  * Decides whether to show CAPTCHA or complete directly
  */
 export function initiateCheckout() {
     if (gameState.cart.length === 0) return;
+
+    // Array of all available CAPTCHA functions, defined at call time
+    // This ensures all functions have been attached to the window object
+    const captchaFunctions = [
+        window.showCaptcha,
+        window.showGasPumpCaptcha,
+        window.showPuzzleCaptcha,
+        window.showFishingCaptcha,
+        window.showNBACaptcha,
+        window.showLunarLanderCaptcha,
+        window.showTanksCaptcha,
+        window.showDartsCaptcha,
+        window.showChessCaptcha,
+        window.showFlappyBirdCaptcha,
+        window.showSkiFreeCaptcha,
+        window.showPoolCaptcha,
+        window.showSimonCaptcha,
+        window.showMinesweeperCaptcha,
+        window.showBlackjackCaptcha
+    ];
 
     // Always show CAPTCHA if competing with opponent for same seats
     const hasCompetition = gameState.isMultiplayer && hasOverlappingSeats();
