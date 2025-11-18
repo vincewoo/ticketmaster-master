@@ -511,6 +511,7 @@ export function showCAPTCHA() {
         ctx.save();
         ctx.translate(poolGameState.cueBall.x, poolGameState.cueBall.y);
         ctx.rotate(poolGameState.cueAngle);
+        ctx.rotate(Math.PI); // Flip 180 degrees to draw behind the ball
 
         // --- CUE DIMENSIONS ---
         const cueLength = 350;
