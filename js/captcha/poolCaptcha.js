@@ -112,6 +112,8 @@ export function showCAPTCHA() {
         cueAngle: 0,
         cuePower: 0,
         powerCharging: false,
+        shooting: false,
+        shotAnimationFrame: 0,
         balls: [],
         cueBall: null,
         threeBallSunk: false,
@@ -151,7 +153,7 @@ export function showCAPTCHA() {
 
     // Event handlers
     const handleMouseMove = (e) => {
-        if (!poolGameState || poolGameState.powerCharging) return;
+        if (!poolGameState || poolGameState.powerCharging || poolGameState.shooting) return;
         if (!areBallsStationary()) return;
 
         const rect = canvas.getBoundingClientRect();
@@ -165,7 +167,7 @@ export function showCAPTCHA() {
     };
 
     const handleMouseDown = () => {
-        if (!poolGameState || poolGameState.powerCharging) return;
+        if (!poolGameState || poolGameState.powerCharging || poolGameState.shooting) return;
         if (!areBallsStationary()) return;
 
         // Allow clicking anywhere to start charging shot
@@ -179,11 +181,9 @@ export function showCAPTCHA() {
         poolGameState.powerCharging = false;
 
         if (poolGameState.cuePower > 0) {
-            // Shoot the cue ball
-            const power = poolGameState.cuePower;
-            poolGameState.cueBall.vx = Math.cos(poolGameState.cueAngle) * power;
-            poolGameState.cueBall.vy = Math.sin(poolGameState.cueAngle) * power;
-            poolGameState.cueAiming = false;
+            // Start the shooting animation
+            poolGameState.shooting = true;
+            poolGameState.shotAnimationFrame = 0;
         }
     };
 
@@ -210,7 +210,7 @@ export function showCAPTCHA() {
         const touchX = touch.clientX - rect.left;
         const touchY = touch.clientY - rect.top;
 
-        if (!poolGameState || poolGameState.powerCharging) return;
+        if (!poolGameState || poolGameState.powerCharging || poolGameState.shooting) return;
         if (!areBallsStationary()) return;
 
         const dx = touchX - poolGameState.cueBall.x;
@@ -505,6 +505,111 @@ export function showCAPTCHA() {
         }
     }
 
+    function drawCue() {
+        if (!poolGameState || !poolGameState.cueAiming || !areBallsStationary() || poolGameState.shooting) return;
+
+        ctx.save();
+        ctx.translate(poolGameState.cueBall.x, poolGameState.cueBall.y);
+        ctx.rotate(poolGameState.cueAngle);
+
+        // --- CUE DIMENSIONS ---
+        const cueLength = 350;
+        const cueButtWidth = 8;
+        const cueTipWidth = 4;
+        const gripLength = 80;
+        const ferruleLength = 10;
+        const tipLength = 5;
+
+        // --- CUE COLORS ---
+        const shaftColor = '#D2B48C'; // Light wood (tan)
+        const gripColor = '#3A2D2C';  // Dark brown/black
+        const ferruleColor = '#FFFFFF';
+        const tipColor = '#4A3B31';   // Dark leather brown
+        const buttCapColor = '#222222';
+
+        // --- ANIMATION LOGIC ---
+        let pullBack = 0;
+        const maxPullBack = (poolGameState.cuePower / MAX_POWER) * 60;
+
+        if (poolGameState.powerCharging) {
+            pullBack = maxPullBack;
+        } else if (poolGameState.shooting) {
+            const animationDuration = 8;
+            const strikeFrame = 3;
+            const recoilFrame = 5;
+            const frame = poolGameState.shotAnimationFrame;
+
+            if (frame <= strikeFrame) {
+                // Lunge forward
+                const progress = frame / strikeFrame;
+                pullBack = maxPullBack * (1 - progress);
+            } else if (frame <= recoilFrame) {
+                // Recoil after strike
+                const progress = (frame - strikeFrame) / (recoilFrame - strikeFrame);
+                pullBack = -5 * progress; // Slight recoil past resting
+            } else {
+                // Return to resting position
+                const progress = (frame - recoilFrame) / (animationDuration - recoilFrame);
+                pullBack = -5 * (1 - progress);
+            }
+        }
+
+        const startX = BALL_RADIUS + 15 + pullBack;
+
+        // Add a shadow for the cue for depth
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = -2;
+        ctx.shadowOffsetY = 2;
+
+        // --- DRAW CUE (from back to front) ---
+
+        // 1. Butt Cap
+        ctx.fillStyle = buttCapColor;
+        ctx.fillRect(startX, -cueButtWidth / 2, 10, cueButtWidth);
+
+        // 2. Grip
+        ctx.fillStyle = gripColor;
+        ctx.fillRect(startX + 10, -cueButtWidth / 2, gripLength, cueButtWidth);
+
+        // 3. Main Shaft (tapered)
+        const shaftStartX = startX + 10 + gripLength;
+        const shaftLength = cueLength - (10 + gripLength + ferruleLength + tipLength);
+
+        // Create a gradient for a more realistic wood look
+        const gradient = ctx.createLinearGradient(shaftStartX, 0, shaftStartX + shaftLength, 0);
+        gradient.addColorStop(0, LightenDarkenColor(shaftColor, -20));
+        gradient.addColorStop(0.5, LightenDarkenColor(shaftColor, 20));
+        gradient.addColorStop(1, LightenDarkenColor(shaftColor, -10));
+        ctx.fillStyle = gradient;
+
+        ctx.beginPath();
+        ctx.moveTo(shaftStartX, -cueButtWidth / 2);
+        ctx.lineTo(shaftStartX + shaftLength, -cueTipWidth / 2);
+        ctx.lineTo(shaftStartX + shaftLength, cueTipWidth / 2);
+        ctx.lineTo(shaftStartX, cueButtWidth / 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // 4. Ferrule
+        const ferruleStartX = shaftStartX + shaftLength;
+        ctx.fillStyle = ferruleColor;
+        ctx.fillRect(ferruleStartX, -cueTipWidth / 2, ferruleLength, cueTipWidth);
+
+        // 5. Tip
+        const tipStartX = ferruleStartX + ferruleLength;
+        ctx.fillStyle = tipColor;
+        ctx.fillRect(tipStartX, -cueTipWidth / 2, tipLength, cueTipWidth);
+
+        // Reset shadow for other drawings
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        ctx.restore();
+    }
+
 
     function draw() {
         // Clear canvas
@@ -575,7 +680,7 @@ export function showCAPTCHA() {
 
 
         // Draw aiming line and collision indicator
-        if (poolGameState.cueAiming && areBallsStationary() && !poolGameState.powerCharging) {
+        if (poolGameState.cueAiming && areBallsStationary() && !poolGameState.shooting) {
             const collision = calculateAimingPath();
 
             if (collision) {
@@ -668,6 +773,9 @@ export function showCAPTCHA() {
             }
         });
 
+        // --- Draw Cue ---
+        drawCue();
+
         // Update power bar
         if (poolGameState.powerCharging) {
             poolGameState.cuePower = Math.min(poolGameState.cuePower + 0.3, MAX_POWER);
@@ -689,6 +797,26 @@ export function showCAPTCHA() {
 
     function gameLoop() {
         if (!poolGameState) return;
+
+        if (poolGameState.shooting) {
+            poolGameState.shotAnimationFrame++;
+            const animationDuration = 8; // A bit longer for a better feel
+            const strikeFrame = 3; // When the ball is hit
+
+            // Apply physics at the "strike" frame
+            if (poolGameState.shotAnimationFrame === strikeFrame) {
+                const power = poolGameState.cuePower;
+                poolGameState.cueBall.vx = Math.cos(poolGameState.cueAngle) * power;
+                poolGameState.cueBall.vy = Math.sin(poolGameState.cueAngle) * power;
+                poolGameState.cueAiming = false; // Stop drawing aiming line
+            }
+
+            if (poolGameState.shotAnimationFrame >= animationDuration) {
+                // Animation finished
+                poolGameState.shooting = false;
+                poolGameState.cuePower = 0; // Reset power
+            }
+        }
 
         updatePhysics();
         draw();
