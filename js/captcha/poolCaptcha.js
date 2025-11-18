@@ -160,6 +160,7 @@ export function showCAPTCHA() {
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
+        // Aim from the cue ball TOWARDS the mouse position
         const dx = mouseX - poolGameState.cueBall.x;
         const dy = mouseY - poolGameState.cueBall.y;
         poolGameState.cueAngle = Math.atan2(dy, dx);
@@ -213,6 +214,7 @@ export function showCAPTCHA() {
         if (!poolGameState || poolGameState.powerCharging || poolGameState.shooting) return;
         if (!areBallsStationary()) return;
 
+        // Aim from the cue ball TOWARDS the touch position
         const dx = touchX - poolGameState.cueBall.x;
         const dy = touchY - poolGameState.cueBall.y;
         poolGameState.cueAngle = Math.atan2(dy, dx);
@@ -506,12 +508,16 @@ export function showCAPTCHA() {
     }
 
     function drawCue() {
-        if (!poolGameState || !poolGameState.cueAiming || !areBallsStationary() || poolGameState.shooting) return;
+        const isAiming = poolGameState && poolGameState.cueAiming && areBallsStationary();
+        const isShooting = poolGameState && poolGameState.shooting;
+
+        if (!isAiming && !isShooting) {
+            return;
+        }
 
         ctx.save();
         ctx.translate(poolGameState.cueBall.x, poolGameState.cueBall.y);
         ctx.rotate(poolGameState.cueAngle);
-        ctx.rotate(Math.PI); // Flip 180 degrees to draw behind the ball
 
         // --- CUE DIMENSIONS ---
         const cueLength = 350;
@@ -535,72 +541,72 @@ export function showCAPTCHA() {
         if (poolGameState.powerCharging) {
             pullBack = maxPullBack;
         } else if (poolGameState.shooting) {
-            const animationDuration = 8;
-            const strikeFrame = 3;
-            const recoilFrame = 5;
+            const animationDuration = 20; // Slower animation
+            const strikeFrame = 5;
+            const recoilFrame = 8;
             const frame = poolGameState.shotAnimationFrame;
 
             if (frame <= strikeFrame) {
-                // Lunge forward
                 const progress = frame / strikeFrame;
                 pullBack = maxPullBack * (1 - progress);
             } else if (frame <= recoilFrame) {
-                // Recoil after strike
                 const progress = (frame - strikeFrame) / (recoilFrame - strikeFrame);
-                pullBack = -5 * progress; // Slight recoil past resting
+                pullBack = -5 * progress;
             } else {
-                // Return to resting position
                 const progress = (frame - recoilFrame) / (animationDuration - recoilFrame);
                 pullBack = -5 * (1 - progress);
             }
         }
 
-        const startX = BALL_RADIUS + 15 + pullBack;
+        // Draw behind the cue ball's origin using negative coordinates
+        const startX = -BALL_RADIUS - 5 - pullBack;
 
         // Add a shadow for the cue for depth
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
         ctx.shadowBlur = 8;
-        ctx.shadowOffsetX = -2;
+        ctx.shadowOffsetX = 2; // Shadow should be behind the cue
         ctx.shadowOffsetY = 2;
 
-        // --- DRAW CUE (from back to front) ---
+        // --- DRAW CUE (from tip to butt, using negative coords) ---
 
-        // 1. Butt Cap
-        ctx.fillStyle = buttCapColor;
-        ctx.fillRect(startX, -cueButtWidth / 2, 10, cueButtWidth);
+        // 1. Tip (closest to the ball, but still negative)
+        const tipStartX = startX - tipLength;
+        ctx.fillStyle = tipColor;
+        ctx.fillRect(tipStartX, -cueTipWidth / 2, tipLength, cueTipWidth);
 
-        // 2. Grip
-        ctx.fillStyle = gripColor;
-        ctx.fillRect(startX + 10, -cueButtWidth / 2, gripLength, cueButtWidth);
-
-        // 3. Main Shaft (tapered)
-        const shaftStartX = startX + 10 + gripLength;
-        const shaftLength = cueLength - (10 + gripLength + ferruleLength + tipLength);
-
-        // Create a gradient for a more realistic wood look
-        const gradient = ctx.createLinearGradient(shaftStartX, 0, shaftStartX + shaftLength, 0);
-        gradient.addColorStop(0, LightenDarkenColor(shaftColor, -20));
-        gradient.addColorStop(0.5, LightenDarkenColor(shaftColor, 20));
-        gradient.addColorStop(1, LightenDarkenColor(shaftColor, -10));
-        ctx.fillStyle = gradient;
-
-        ctx.beginPath();
-        ctx.moveTo(shaftStartX, -cueButtWidth / 2);
-        ctx.lineTo(shaftStartX + shaftLength, -cueTipWidth / 2);
-        ctx.lineTo(shaftStartX + shaftLength, cueTipWidth / 2);
-        ctx.lineTo(shaftStartX, cueButtWidth / 2);
-        ctx.closePath();
-        ctx.fill();
-
-        // 4. Ferrule
-        const ferruleStartX = shaftStartX + shaftLength;
+        // 2. Ferrule
+        const ferruleStartX = tipStartX - ferruleLength;
         ctx.fillStyle = ferruleColor;
         ctx.fillRect(ferruleStartX, -cueTipWidth / 2, ferruleLength, cueTipWidth);
 
-        // 5. Tip
-        const tipStartX = ferruleStartX + ferruleLength;
-        ctx.fillStyle = tipColor;
-        ctx.fillRect(tipStartX, -cueTipWidth / 2, tipLength, cueTipWidth);
+        // 3. Main Shaft (tapered)
+        const shaftStartX = ferruleStartX;
+        const shaftLength = cueLength - (10 + gripLength + ferruleLength + tipLength);
+        const shaftEndX = shaftStartX - shaftLength;
+
+        const gradient = ctx.createLinearGradient(shaftStartX, 0, shaftEndX, 0);
+        gradient.addColorStop(0, LightenDarkenColor(shaftColor, -10));
+        gradient.addColorStop(0.5, LightenDarkenColor(shaftColor, 20));
+        gradient.addColorStop(1, LightenDarkenColor(shaftColor, -20));
+        ctx.fillStyle = gradient;
+
+        ctx.beginPath();
+        ctx.moveTo(shaftStartX, -cueTipWidth / 2);
+        ctx.lineTo(shaftEndX, -cueButtWidth / 2);
+        ctx.lineTo(shaftEndX, cueButtWidth / 2);
+        ctx.lineTo(shaftStartX, cueTipWidth / 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // 4. Grip
+        const gripStartX = shaftEndX;
+        ctx.fillStyle = gripColor;
+        ctx.fillRect(gripStartX - gripLength, -cueButtWidth / 2, gripLength, cueButtWidth);
+
+        // 5. Butt Cap
+        const buttCapStartX = gripStartX - gripLength;
+        ctx.fillStyle = buttCapColor;
+        ctx.fillRect(buttCapStartX - 10, -cueButtWidth / 2, 10, cueButtWidth);
 
         // Reset shadow for other drawings
         ctx.shadowColor = 'transparent';
@@ -801,8 +807,8 @@ export function showCAPTCHA() {
 
         if (poolGameState.shooting) {
             poolGameState.shotAnimationFrame++;
-            const animationDuration = 8; // A bit longer for a better feel
-            const strikeFrame = 3; // When the ball is hit
+            const animationDuration = 20; // Match the drawCue animation
+            const strikeFrame = 5; // Match the drawCue animation
 
             // Apply physics at the "strike" frame
             if (poolGameState.shotAnimationFrame === strikeFrame) {
