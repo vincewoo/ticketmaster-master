@@ -160,9 +160,10 @@ export function showCAPTCHA() {
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        // Aim from the cue ball TOWARDS the mouse position
-        const dx = mouseX - poolGameState.cueBall.x;
-        const dy = mouseY - poolGameState.cueBall.y;
+        // Mouse position represents where the cue is (behind the ball)
+        // Aim from the mouse position THROUGH the cue ball
+        const dx = poolGameState.cueBall.x - mouseX;
+        const dy = poolGameState.cueBall.y - mouseY;
         poolGameState.cueAngle = Math.atan2(dy, dx);
         poolGameState.cueAiming = true;
     };
@@ -214,9 +215,10 @@ export function showCAPTCHA() {
         if (!poolGameState || poolGameState.powerCharging || poolGameState.shooting) return;
         if (!areBallsStationary()) return;
 
-        // Aim from the cue ball TOWARDS the touch position
-        const dx = touchX - poolGameState.cueBall.x;
-        const dy = touchY - poolGameState.cueBall.y;
+        // Touch position represents where the cue is (behind the ball)
+        // Aim from the touch position THROUGH the cue ball
+        const dx = poolGameState.cueBall.x - touchX;
+        const dy = poolGameState.cueBall.y - touchY;
         poolGameState.cueAngle = Math.atan2(dy, dx);
         poolGameState.cueAiming = true;
     };
