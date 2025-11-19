@@ -624,66 +624,133 @@ export function showCAPTCHA() {
         // Clear canvas
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-        // --- Draw Enhanced Table ---
+        // --- Draw Traditional Pool Table ---
 
-        // 1. Wood Frame with Texture
-        const woodDark = '#6B4226';
-        const woodLight = '#8A5A38';
-        ctx.fillStyle = woodDark;
+        // 1. Wooden Frame/Rails with realistic wood grain
+        const woodBase = '#8B4513'; // Saddle brown
+        const woodDark = '#5C2E0A';
+        const woodMid = '#6B3410';
+
+        // Create wood gradient for 3D effect
+        const woodGradient = ctx.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        woodGradient.addColorStop(0, '#9B5513');
+        woodGradient.addColorStop(0.5, woodBase);
+        woodGradient.addColorStop(1, woodDark);
+        ctx.fillStyle = woodGradient;
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        // Simple procedural wood grain
-        for (let i = 0; i < CANVAS_WIDTH; i += 2) {
-            ctx.fillStyle = `rgba(138, 90, 56, ${Math.random() * 0.2})`;
-            ctx.fillRect(i, 0, 1, CANVAS_HEIGHT);
-        }
-        for (let i = 0; i < CANVAS_HEIGHT; i += 2) {
-            ctx.fillStyle = `rgba(138, 90, 56, ${Math.random() * 0.2})`;
-            ctx.fillRect(0, i, CANVAS_WIDTH, 1);
-        }
 
-        // 2. Table Felt (Classic Green)
-        const feltColor = '#006442';
+        // Add wood grain texture
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        for (let i = 0; i < CANVAS_WIDTH; i += 3) {
+            const variation = Math.sin(i * 0.1) * 0.3 + 0.5;
+            ctx.fillStyle = `rgba(101, 52, 16, ${variation})`;
+            ctx.fillRect(i, 0, 2, CANVAS_HEIGHT);
+        }
+        ctx.restore();
+
+        // Add wood highlights for depth
+        ctx.strokeStyle = 'rgba(139, 90, 43, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(5, 5, CANVAS_WIDTH - 10, CANVAS_HEIGHT - 10);
+
+        // 2. Table Felt (Traditional Championship Green)
+        const feltColor = '#0A7E4A'; // Brighter traditional green
         ctx.fillStyle = feltColor;
         ctx.fillRect(TABLE_PADDING, TABLE_PADDING, TABLE_WIDTH, TABLE_HEIGHT);
 
-        // Add subtle gradient to felt for depth
-        const feltGradient = ctx.createLinearGradient(0, TABLE_PADDING, 0, CANVAS_HEIGHT - TABLE_PADDING);
-        feltGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
-        feltGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.05)');
-        feltGradient.addColorStop(1, 'rgba(0, 0, 0, 0.15)');
+        // Add subtle felt texture and lighting
+        const feltGradient = ctx.createLinearGradient(
+            TABLE_PADDING, TABLE_PADDING,
+            CANVAS_WIDTH - TABLE_PADDING, CANVAS_HEIGHT - TABLE_PADDING
+        );
+        feltGradient.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
+        feltGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.02)');
+        feltGradient.addColorStop(1, 'rgba(0, 0, 0, 0.12)');
         ctx.fillStyle = feltGradient;
         ctx.fillRect(TABLE_PADDING, TABLE_PADDING, TABLE_WIDTH, TABLE_HEIGHT);
 
+        // 3. Wooden Cushions/Rails with beveled edge
+        const railColor = '#654321';
+        const railHighlight = '#8B6914';
 
-        // 3. Cushions (Rails)
-        const cushionColor = '#004D31';
-        ctx.fillStyle = cushionColor;
-        // Top and bottom cushions
-        ctx.fillRect(TABLE_PADDING, 0, TABLE_WIDTH, TABLE_PADDING);
-        ctx.fillRect(TABLE_PADDING, CANVAS_HEIGHT - TABLE_PADDING, TABLE_WIDTH, TABLE_PADDING);
-        // Left and right cushions
-        ctx.fillRect(0, TABLE_PADDING, TABLE_PADDING, TABLE_HEIGHT);
-        ctx.fillRect(CANVAS_WIDTH - TABLE_PADDING, TABLE_PADDING, TABLE_PADDING, TABLE_HEIGHT);
+        // Function to draw beveled rail
+        function drawBeveledRail(x, y, width, height, isHorizontal) {
+            // Main rail
+            const railGrad = isHorizontal
+                ? ctx.createLinearGradient(x, y, x, y + height)
+                : ctx.createLinearGradient(x, y, x + width, y);
+            railGrad.addColorStop(0, railHighlight);
+            railGrad.addColorStop(0.4, railColor);
+            railGrad.addColorStop(1, woodDark);
+            ctx.fillStyle = railGrad;
+            ctx.fillRect(x, y, width, height);
 
-        // Add inner shadow to cushions for depth
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(TABLE_PADDING, TABLE_PADDING, TABLE_WIDTH, TABLE_HEIGHT);
+            // Highlight edge
+            ctx.strokeStyle = 'rgba(139, 105, 20, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, width, height);
+        }
 
-        // 4. Rail Diamonds
+        // Draw all rails
+        drawBeveledRail(TABLE_PADDING, 0, TABLE_WIDTH, TABLE_PADDING, true); // Top
+        drawBeveledRail(TABLE_PADDING, CANVAS_HEIGHT - TABLE_PADDING, TABLE_WIDTH, TABLE_PADDING, true); // Bottom
+        drawBeveledRail(0, TABLE_PADDING, TABLE_PADDING, TABLE_HEIGHT, false); // Left
+        drawBeveledRail(CANVAS_WIDTH - TABLE_PADDING, TABLE_PADDING, TABLE_PADDING, TABLE_HEIGHT, false); // Right
+
+        // Add inner shadow to rails for depth
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(TABLE_PADDING + 1, TABLE_PADDING + 1, TABLE_WIDTH - 2, TABLE_HEIGHT - 2);
+
+        // 4. Rail Diamonds (sight markers)
         drawRailDiamonds();
 
-        // 5. Pockets
+        // 5. Leather Pockets
         POCKETS.forEach(pocket => {
-            const gradient = ctx.createRadialGradient(pocket.x, pocket.y, POCKET_RADIUS * 0.5, pocket.x, pocket.y, POCKET_CAPTURE_RADIUS);
-            gradient.addColorStop(0, '#111');
-            gradient.addColorStop(0.7, '#000');
-            gradient.addColorStop(0.9, cushionColor);
-            gradient.addColorStop(1, 'transparent');
+            const pocketSize = POCKET_CAPTURE_RADIUS;
 
-            ctx.fillStyle = gradient;
+            // Outer leather rim
+            const leatherGradient = ctx.createRadialGradient(
+                pocket.x - pocketSize * 0.2, pocket.y - pocketSize * 0.2, pocketSize * 0.3,
+                pocket.x, pocket.y, pocketSize
+            );
+            leatherGradient.addColorStop(0, '#5C4033'); // Lighter leather
+            leatherGradient.addColorStop(0.6, '#3E2723'); // Medium leather brown
+            leatherGradient.addColorStop(1, '#1A1310'); // Dark leather edge
+
+            ctx.fillStyle = leatherGradient;
             ctx.beginPath();
-            ctx.arc(pocket.x, pocket.y, POCKET_CAPTURE_RADIUS, 0, Math.PI * 2);
+            ctx.arc(pocket.x, pocket.y, pocketSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Leather texture/stitching ring
+            ctx.strokeStyle = '#8B6F47';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 2]);
+            ctx.beginPath();
+            ctx.arc(pocket.x, pocket.y, pocketSize * 0.85, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Inner pocket hole (dark)
+            const holeGradient = ctx.createRadialGradient(
+                pocket.x, pocket.y, 0,
+                pocket.x, pocket.y, pocketSize * 0.7
+            );
+            holeGradient.addColorStop(0, '#000000');
+            holeGradient.addColorStop(0.8, '#0A0A0A');
+            holeGradient.addColorStop(1, '#1A1310');
+
+            ctx.fillStyle = holeGradient;
+            ctx.beginPath();
+            ctx.arc(pocket.x, pocket.y, pocketSize * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Highlight for leather sheen
+            ctx.fillStyle = 'rgba(139, 111, 71, 0.3)';
+            ctx.beginPath();
+            ctx.arc(pocket.x - pocketSize * 0.3, pocket.y - pocketSize * 0.3, pocketSize * 0.4, 0, Math.PI * 2);
             ctx.fill();
         });
 
