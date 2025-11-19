@@ -83,10 +83,24 @@ export function showCAPTCHA() {
         }
     }, YETI_START_DELAY);
 
-    // Event listeners - mouse movement
+    // Event listeners - mouse and touch movement
     const handleMouseMove = (e) => {
         const rect = canvas.getBoundingClientRect();
         skiGameState.mouseX = e.clientX - rect.left;
+    };
+
+    const handleTouchMove = (e) => {
+        e.preventDefault(); // Prevent scrolling while playing
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        skiGameState.mouseX = touch.clientX - rect.left;
+    };
+
+    const handleTouchStart = (e) => {
+        e.preventDefault(); // Prevent scrolling while playing
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        skiGameState.mouseX = touch.clientX - rect.left;
     };
 
     const handleCancel = () => {
@@ -94,6 +108,8 @@ export function showCAPTCHA() {
     };
 
     canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     cancelBtn.addEventListener('click', handleCancel);
 
     // Timer
@@ -388,6 +404,8 @@ export function showCAPTCHA() {
         }
         clearInterval(timerInterval);
         canvas.removeEventListener('mousemove', handleMouseMove);
+        canvas.removeEventListener('touchmove', handleTouchMove);
+        canvas.removeEventListener('touchstart', handleTouchStart);
         cancelBtn.removeEventListener('click', handleCancel);
         modal.classList.add('hidden');
         skiGameState = null;
