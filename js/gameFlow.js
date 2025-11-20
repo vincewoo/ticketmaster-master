@@ -43,7 +43,7 @@ export function startGame() {
 
     // Generate shopping list for the game
     gameState.shoppingList = generateShoppingList();
-    gameState.currentShoppingIndex = 0;
+    gameState.selectedShoppingIndex = 0;
 
     // DEPRECATED: Keep for backwards compatibility
     gameState.targetTicketCount = generateTargetTicketCount();
@@ -183,7 +183,8 @@ export function updateDisplay() {
 
 /**
  * Update shopping list display in sidebar
- * Shows all items with completed status
+ * Shows all items with completed and selected status
+ * Items are clickable to select them as the current target
  */
 export function updateShoppingListDisplay() {
     const listContainer = document.getElementById('shopping-list-container');
@@ -197,8 +198,17 @@ export function updateShoppingListDisplay() {
 
         if (item.completed) {
             itemDiv.classList.add('completed');
-        } else if (index === gameState.currentShoppingIndex) {
-            itemDiv.classList.add('current');
+        } else {
+            // Make incomplete items clickable
+            itemDiv.classList.add('clickable');
+            if (index === gameState.selectedShoppingIndex) {
+                itemDiv.classList.add('selected');
+            }
+            itemDiv.addEventListener('click', () => {
+                if (window.selectShoppingItem) {
+                    window.selectShoppingItem(index);
+                }
+            });
         }
 
         itemDiv.innerHTML = `

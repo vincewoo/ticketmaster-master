@@ -58,14 +58,26 @@ export function generateShoppingList() {
 }
 
 /**
- * Get current shopping list item
- * @returns {Object|null} Current item or null if list is complete
+ * Get selected shopping list item
+ * @returns {Object|null} Selected item or null if list is complete
  */
 export function getCurrentShoppingItem() {
-    if (gameState.currentShoppingIndex >= gameState.shoppingList.length) {
+    if (gameState.selectedShoppingIndex >= gameState.shoppingList.length) {
         return null;
     }
-    return gameState.shoppingList[gameState.currentShoppingIndex];
+    return gameState.shoppingList[gameState.selectedShoppingIndex];
+}
+
+/**
+ * Select a shopping list item by index
+ * @param {number} index - Index of item to select
+ */
+export function selectShoppingItem(index) {
+    if (index >= 0 && index < gameState.shoppingList.length) {
+        gameState.selectedShoppingIndex = index;
+        if (window.updateCart) window.updateCart();
+        if (window.updateDisplay) window.updateDisplay();
+    }
 }
 
 /**
@@ -266,11 +278,15 @@ export function completeCheckout() {
         });
     }
 
-    // Move to next shopping list item
-    gameState.currentShoppingIndex++;
+    // Auto-select next incomplete item (or stay on current if it was the last)
+    const nextIncompleteIndex = gameState.shoppingList.findIndex((item, idx) => !item.completed);
+    if (nextIncompleteIndex !== -1) {
+        gameState.selectedShoppingIndex = nextIncompleteIndex;
+    }
 
     // Check if shopping list is complete - end game if so
-    if (gameState.currentShoppingIndex >= gameState.shoppingList.length) {
+    const allComplete = gameState.shoppingList.every(item => item.completed);
+    if (allComplete) {
         // Shopping list complete! End the game
         if (window.endGame) {
             window.endGame();
@@ -320,11 +336,15 @@ export function skipTarget() {
         });
     }
 
-    // Move to next shopping list item
-    gameState.currentShoppingIndex++;
+    // Auto-select next incomplete item
+    const nextIncompleteIndex = gameState.shoppingList.findIndex((item, idx) => !item.completed);
+    if (nextIncompleteIndex !== -1) {
+        gameState.selectedShoppingIndex = nextIncompleteIndex;
+    }
 
     // Check if shopping list is complete - end game if so
-    if (gameState.currentShoppingIndex >= gameState.shoppingList.length) {
+    const allComplete = gameState.shoppingList.every(item => item.completed);
+    if (allComplete) {
         // Shopping list complete! End the game
         if (window.endGame) {
             window.endGame();

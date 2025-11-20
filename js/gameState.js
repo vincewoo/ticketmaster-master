@@ -19,7 +19,7 @@ export const gameState = {
     ticketsPurchased: 0,
     targetTicketCount: 0, // DEPRECATED: Kept for backwards compatibility
     shoppingList: [], // Array of shopping list items {name, quantity, budget, completed}
-    currentShoppingIndex: 0, // Current item being purchased
+    selectedShoppingIndex: 0, // Selected item to purchase (user can choose any incomplete item)
     skipsCount: 0,
     purchaseHistory: [], // Track all purchases for end game review
 
@@ -84,7 +84,7 @@ export function resetGameState() {
     gameState.totalSaved = 0;
     gameState.ticketsPurchased = 0;
     gameState.shoppingList = [];
-    gameState.currentShoppingIndex = 0;
+    gameState.selectedShoppingIndex = 0;
     gameState.skipsCount = 0;
     gameState.purchaseHistory = [];
     gameState.saleEventActive = false;
