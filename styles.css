@@ -208,6 +208,12 @@ body {
     border: 2px solid #f5c6cb;
 }
 
+.cart-status.warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 2px solid #ffc107;
+}
+
 .cart-item {
     background: white;
     padding: 12px;
@@ -306,6 +312,69 @@ body {
     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
 }
 
+/* Shopping List Section */
+.shopping-list-section {
+    background: #e8f5e9;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 2px solid #4caf50;
+}
+
+.shopping-list-section h3 {
+    margin: 0 0 12px 0;
+    color: #2e7d32;
+    font-size: 1.1em;
+}
+
+.shopping-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shopping-list-item {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.2s;
+}
+
+.shopping-list-item.current {
+    border-color: #2196f3;
+    background: #e3f2fd;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.shopping-list-item.completed {
+    opacity: 0.6;
+    border-color: #9e9e9e;
+    background: #f5f5f5;
+    text-decoration: line-through;
+}
+
+.shopping-item-name {
+    font-weight: bold;
+    color: #1976d2;
+    font-size: 0.95em;
+    margin-bottom: 4px;
+}
+
+.shopping-list-item.completed .shopping-item-name {
+    color: #757575;
+}
+
+.shopping-item-details {
+    font-size: 0.85em;
+    color: #555;
+}
+
+.shopping-list-item.completed .shopping-item-details {
+    color: #9e9e9e;
+}
+
+/* Game Info */
 .game-info {
     background: #fff3cd;
     border-radius: 8px;

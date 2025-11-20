@@ -17,7 +17,7 @@
             </div>
             <div class="header-right">
                 <div class="target-display">
-                    <span class="label">Target Tickets:</span>
+                    <span class="label">Current:</span>
                     <span id="target-tickets" class="target-tickets">0</span>
                 </div>
                 <div class="timer-display">
@@ -62,13 +62,21 @@
                         <span id="cart-total">$0.00</span>
                     </div>
                     <button id="checkout-btn" class="checkout-btn" disabled>Checkout</button>
-                    <button id="skip-btn" class="skip-btn">Skip Target (-50 pts)</button>
+                    <button id="skip-btn" class="skip-btn">Skip Item (-50 pts)</button>
+                </div>
+
+                <div class="shopping-list-section">
+                    <h3>Shopping List</h3>
+                    <div id="shopping-list-container" class="shopping-list-container">
+                        <!-- Shopping list items will be generated here -->
+                    </div>
                 </div>
 
                 <div class="game-info">
                     <h3>How to Play</h3>
                     <ul>
-                        <li>Match the target ticket count shown at top</li>
+                        <li>Buy tickets for each person on your shopping list</li>
+                        <li>Get the exact quantity they need within their budget</li>
                         <li>1-3 seats: must be adjacent in same row</li>
                         <li>4+ seats: can span 2 rows as touching block
                             <div class="block-examples">
@@ -87,11 +95,10 @@
                                 </div>
                             </div>
                         </li>
-                        <li>Can't find seats? Skip target for -50 pts penalty</li>
+                        <li>Stay under budget to earn points (savings = score!)</li>
+                        <li>Can't find good seats? Skip for -50 pts penalty</li>
                         <li>Prices change constantly - grab deals fast!</li>
-                        <li>Seats randomly become available/unavailable</li>
-                        <li>Complete CAPTCHA challenges to checkout</li>
-                        <li>Only valid purchases earn points!</li>
+                        <li>Complete all items or run out of time!</li>
                     </ul>
                 </div>
             </aside>

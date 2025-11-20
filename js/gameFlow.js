@@ -3,7 +3,7 @@ import { gameState, resetGameState, resetMultiplayerState } from './gameState.js
 import { GAME_DURATION, getGridConfig, applyGridLayout } from './config.js';
 import { generateSeats, renderSeats, updateSeatAvailability, updateSeatPrices } from './seatManagement.js';
 import { updateCart } from './cartManagement.js';
-import { generateTargetTicketCount, generateEventTimes } from './checkout.js';
+import { generateTargetTicketCount, generateShoppingList, getCurrentShoppingItem, generateEventTimes } from './checkout.js';
 
 /**
  * Initialize game
@@ -40,6 +40,12 @@ export function startGame() {
     gameState.purchaseHistory = [];
     gameState.opponentScore = 0;
     gameState.opponentCart = [];
+
+    // Generate shopping list for the game
+    gameState.shoppingList = generateShoppingList();
+    gameState.currentShoppingIndex = 0;
+
+    // DEPRECATED: Keep for backwards compatibility
     gameState.targetTicketCount = generateTargetTicketCount();
 
     // Generate random event times (host only in multiplayer)
@@ -144,7 +150,7 @@ export function updateTimer() {
 
 /**
  * Update display
- * Updates timer, score, and target displays
+ * Updates timer, score, shopping list, and target displays
  */
 export function updateDisplay() {
     const timerEl = document.getElementById('timer');
@@ -157,12 +163,53 @@ export function updateDisplay() {
     timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
     scoreEl.textContent = Math.floor(gameState.score);
-    targetEl.textContent = gameState.targetTicketCount;
+
+    // Update target display to show current shopping item
+    const currentItem = getCurrentShoppingItem();
+    if (currentItem) {
+        targetEl.textContent = `${currentItem.name}: ${currentItem.quantity} tickets ($${currentItem.budget})`;
+    } else {
+        targetEl.textContent = 'Complete!';
+    }
 
     // Update opponent score in multiplayer
     if (gameState.isMultiplayer) {
         opponentScoreEl.textContent = Math.floor(gameState.opponentScore);
     }
+
+    // Update shopping list display if it exists
+    updateShoppingListDisplay();
+}
+
+/**
+ * Update shopping list display in sidebar
+ * Shows all items with completed status
+ */
+export function updateShoppingListDisplay() {
+    const listContainer = document.getElementById('shopping-list-container');
+    if (!listContainer || gameState.shoppingList.length === 0) return;
+
+    listContainer.innerHTML = '';
+
+    gameState.shoppingList.forEach((item, index) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'shopping-list-item';
+
+        if (item.completed) {
+            itemDiv.classList.add('completed');
+        } else if (index === gameState.currentShoppingIndex) {
+            itemDiv.classList.add('current');
+        }
+
+        itemDiv.innerHTML = `
+            <div class="shopping-item-name">${item.name}</div>
+            <div class="shopping-item-details">
+                ${item.quantity} tickets | Budget: $${item.budget}
+            </div>
+        `;
+
+        listContainer.appendChild(itemDiv);
+    });
 }
 
 /**

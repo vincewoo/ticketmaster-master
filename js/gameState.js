@@ -17,7 +17,9 @@ export const gameState = {
     captchaCode: '',
     totalSaved: 0,
     ticketsPurchased: 0,
-    targetTicketCount: 0,
+    targetTicketCount: 0, // DEPRECATED: Kept for backwards compatibility
+    shoppingList: [], // Array of shopping list items {name, quantity, budget, completed}
+    currentShoppingIndex: 0, // Current item being purchased
     skipsCount: 0,
     purchaseHistory: [], // Track all purchases for end game review
 
@@ -81,6 +83,8 @@ export function resetGameState() {
     gameState.cart = [];
     gameState.totalSaved = 0;
     gameState.ticketsPurchased = 0;
+    gameState.shoppingList = [];
+    gameState.currentShoppingIndex = 0;
     gameState.skipsCount = 0;
     gameState.purchaseHistory = [];
     gameState.saleEventActive = false;

@@ -1,6 +1,7 @@
 // Cart management and validation logic
 import { gameState } from './gameState.js';
 import { renderSeats } from './seatManagement.js';
+import { getCurrentShoppingItem } from './checkout.js';
 
 /**
  * Check if seats are adjacent (side-by-side in same row)
@@ -192,10 +193,27 @@ export function updateCart() {
         return;
     }
 
-    // Check if seats are adjacent and match target count
+    // Get current shopping item
+    const currentItem = getCurrentShoppingItem();
+    if (!currentItem) {
+        // Shopping list complete
+        cartItems.innerHTML = '<p class="empty-cart">Shopping list complete!</p>';
+        cartTotal.textContent = '$0.00';
+        checkoutBtn.disabled = true;
+        return;
+    }
+
+    // Check if seats are adjacent and match required quantity
     const isAdjacent = areSeatsAdjacent(gameState.cart);
-    const isCorrectCount = gameState.cart.length === gameState.targetTicketCount;
+    const isCorrectCount = gameState.cart.length === currentItem.quantity;
     const isValid = isAdjacent && isCorrectCount;
+
+    // Calculate total and check budget
+    let total = 0;
+    gameState.cart.forEach(item => {
+        total += item.price;
+    });
+    const withinBudget = total <= currentItem.budget;
 
     cartItems.innerHTML = '';
 
@@ -204,23 +222,27 @@ export function updateCart() {
     statusDiv.className = 'cart-status';
     if (!isCorrectCount) {
         statusDiv.className += ' invalid';
-        statusDiv.textContent = `Need ${gameState.targetTicketCount} tickets (have ${gameState.cart.length})`;
+        statusDiv.textContent = `Need ${currentItem.quantity} tickets for ${currentItem.name} (have ${gameState.cart.length})`;
     } else if (!isAdjacent) {
         statusDiv.className += ' invalid';
-        // Dynamic message based on target ticket count
-        if (gameState.targetTicketCount <= 3) {
+        // Dynamic message based on required quantity
+        if (currentItem.quantity <= 3) {
             statusDiv.textContent = '⚠️ Seats must be adjacent in same row';
         } else {
             statusDiv.textContent = '⚠️ Seats must be adjacent (1 row) or form a touching block (2 consecutive rows, min 2/row)';
         }
+    } else if (!withinBudget) {
+        statusDiv.className += ' warning';
+        const overBudget = total - currentItem.budget;
+        statusDiv.textContent = `⚠️ Over budget by $${overBudget.toFixed(2)} (0 points)`;
     } else {
         statusDiv.className += ' valid';
-        statusDiv.textContent = '✓ Valid selection!';
+        const savings = currentItem.budget - total;
+        statusDiv.textContent = `✓ Valid! Save $${savings.toFixed(2)} (${Math.floor(savings)} pts)`;
     }
     cartItems.appendChild(statusDiv);
 
-    let total = 0;
-
+    // Add cart items (total already calculated above)
     gameState.cart.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'cart-item';
@@ -247,11 +269,9 @@ export function updateCart() {
         itemDiv.appendChild(infoDiv);
         itemDiv.appendChild(removeBtn);
         cartItems.appendChild(itemDiv);
-
-        total += item.price;
     });
 
-    cartTotal.textContent = `$${total.toFixed(2)}`;
+    cartTotal.textContent = `$${total.toFixed(2)} / $${currentItem.budget}`;
 
     // Only enable checkout if selection is valid
     checkoutBtn.disabled = !isValid;

@@ -5,8 +5,8 @@ import { gameState } from './gameState.js';
 import { getGridConfig, applyGridLayout, getCurrentGridColumns } from './config.js';
 import { generateSeats, renderSeats, updateSeatAvailability, updateSeatPrices, getPriceColor } from './seatManagement.js';
 import { areSeatsAdjacent, hasOverlappingSeats, handleSeatClick, removeSeatFromCart, updateCart } from './cartManagement.js';
-import { generateTargetTicketCount, generateEventTimes, initiateCheckout, completeCheckout, skipTarget } from './checkout.js';
-import { initGame, startGame, updateTimer, updateDisplay, updateEventDisplay, endGame, showLoadingScreen, showModal, hideModal, setupEventListeners } from './gameFlow.js';
+import { generateTargetTicketCount, generateShoppingList, getCurrentShoppingItem, generateEventTimes, initiateCheckout, completeCheckout, skipTarget } from './checkout.js';
+import { initGame, startGame, updateTimer, updateDisplay, updateShoppingListDisplay, updateEventDisplay, endGame, showLoadingScreen, showModal, hideModal, setupEventListeners } from './gameFlow.js';
 import { initMultiplayer, hostGame, joinGame, setupConnection, handleMultiplayerMessage, sendMultiplayerMessage, copyGameCode, cancelHost, cancelJoin } from './multiplayer.js';
 import { setupDebugPanel } from './ui.js';
 
@@ -26,6 +26,7 @@ import { showCAPTCHA as showPoolCaptcha } from './captcha/poolCaptcha.js';
 import { showCAPTCHA as showSimonCaptcha } from './captcha/simonCaptcha.js';
 import { showCAPTCHA as showMinesweeperCaptcha } from './captcha/minesweeper.js';
 import { showBlackjackCaptcha, handleBlackjackHit, handleBlackjackStand, cancelBlackjackCaptcha } from './captcha/blackjackCaptcha.js';
+import { showCAPTCHA as showSnakeCaptcha } from './captcha/snakeCaptcha.js';
 
 // Export all functions to window for global access
 // Core game flow
@@ -58,6 +59,8 @@ window.hasOverlappingSeats = hasOverlappingSeats;
 
 // Checkout
 window.generateTargetTicketCount = generateTargetTicketCount;
+window.generateShoppingList = generateShoppingList;
+window.getCurrentShoppingItem = getCurrentShoppingItem;
 window.generateEventTimes = generateEventTimes;
 window.initiateCheckout = initiateCheckout;
 window.completeCheckout = completeCheckout;
@@ -141,6 +144,8 @@ window.handleBlackjackHit = handleBlackjackHit;
 window.handleBlackjackStand = handleBlackjackStand;
 window.cancelBlackjackCaptcha = cancelBlackjackCaptcha;
 
+// Snake CAPTCHA
+window.showSnakeCaptcha = showSnakeCaptcha;
 
 // Export gameState for debugging
 window.gameState = gameState;

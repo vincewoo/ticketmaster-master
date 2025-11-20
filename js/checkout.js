@@ -1,11 +1,76 @@
-// Checkout process and target ticket management
+// Checkout process and shopping list management
 import { gameState } from './gameState.js';
 import { SKIP_PENALTY, GAME_DURATION } from './config.js';
 import { areSeatsAdjacent, hasOverlappingSeats } from './cartManagement.js';
 import { renderSeats } from './seatManagement.js';
 
+// Family member names for shopping list
+const FAMILY_NAMES = [
+    "Brother Tom", "Sister Sarah", "Mom", "Dad", "Cousin Mike",
+    "Aunt Linda", "Uncle Bob", "Grandma", "Grandpa", "Friend Alex",
+    "Coworker Jessica", "Neighbor Chris", "Roommate Sam", "Best Friend Taylor"
+];
+
 /**
- * Generate random target ticket count for next purchase
+ * Generate shopping list for the game
+ * Creates 4-6 shopping items with random family members, quantities, and budgets
+ * @returns {Array} Shopping list array
+ */
+export function generateShoppingList() {
+    const numItems = Math.floor(Math.random() * 3) + 4; // 4-6 items
+    const shoppingList = [];
+    const usedNames = new Set();
+    const maxTarget = Math.min(gameState.gridColumns, 6);
+
+    for (let i = 0; i < numItems; i++) {
+        // Pick a unique name
+        let name;
+        do {
+            name = FAMILY_NAMES[Math.floor(Math.random() * FAMILY_NAMES.length)];
+        } while (usedNames.has(name));
+        usedNames.add(name);
+
+        // Random quantity (1 to maxTarget)
+        const quantity = Math.floor(Math.random() * maxTarget) + 1;
+
+        // Budget based on quantity with some variability
+        // Base budget per ticket: $80-$150
+        const budgetPerTicket = Math.floor(Math.random() * 70) + 80;
+        const budget = quantity * budgetPerTicket;
+
+        shoppingList.push({
+            name,
+            quantity,
+            budget,
+            completed: false
+        });
+    }
+
+    // In multiplayer, host broadcasts the shopping list to guest
+    if (gameState.isMultiplayer && gameState.isHost && window.sendMultiplayerMessage) {
+        window.sendMultiplayerMessage({
+            type: 'shoppingListUpdate',
+            shoppingList: shoppingList
+        });
+    }
+
+    return shoppingList;
+}
+
+/**
+ * Get current shopping list item
+ * @returns {Object|null} Current item or null if list is complete
+ */
+export function getCurrentShoppingItem() {
+    if (gameState.currentShoppingIndex >= gameState.shoppingList.length) {
+        return null;
+    }
+    return gameState.shoppingList[gameState.currentShoppingIndex];
+}
+
+/**
+ * DEPRECATED: Generate random target ticket count for next purchase
+ * Kept for backwards compatibility
  * @returns {number} Target ticket count (1 to max)
  */
 export function generateTargetTicketCount() {
@@ -99,41 +164,52 @@ export function initiateCheckout() {
 
 /**
  * Complete checkout process
- * Calculate score, update state, and generate new target
+ * Calculate score based on budget, update state, and move to next shopping item
  */
 export function completeCheckout() {
+    const currentItem = getCurrentShoppingItem();
+    if (!currentItem) {
+        // Shopping list is complete, shouldn't happen
+        return;
+    }
+
     // Check if purchase is valid (correct count and adjacent)
     const isAdjacent = areSeatsAdjacent(gameState.cart);
-    const isCorrectCount = gameState.cart.length === gameState.targetTicketCount;
+    const isCorrectCount = gameState.cart.length === currentItem.quantity;
     const isValid = isAdjacent && isCorrectCount;
 
-    let total = 0;
-    let savings = 0;
+    let totalPaid = 0;
+    let savings = 0; // Savings vs base price (for tracking)
 
     gameState.cart.forEach(item => {
-        total += item.price;
-        // Calculate savings (positive if below base price, negative if above)
+        totalPaid += item.price;
         const saving = item.basePrice - item.price;
         savings += saving;
     });
 
-    // Apply quantity multiplier bonus (only to positive savings, not penalties)
-    // 1 ticket: 1x, 2 tickets: 1.2x, 3 tickets: 1.4x, 4 tickets: 1.6x, 5 tickets: 1.8x, 6 tickets: 2x
-    let finalScore;
-    if (savings > 0) {
-        // Multiply positive savings by quantity bonus
-        const quantityMultiplier = 1 + (gameState.cart.length - 1) * 0.2;
-        finalScore = savings * quantityMultiplier;
-    } else {
-        // Penalties are not multiplied (flat deduction)
-        finalScore = savings;
+    // Calculate score based on budget (NEW SCORING SYSTEM)
+    // Points = budget - totalPaid (if within budget and valid purchase)
+    // If over budget, you can still purchase but get 0 points
+    let finalScore = 0;
+    if (isValid) {
+        const budgetSavings = currentItem.budget - totalPaid;
+        if (budgetSavings > 0) {
+            // Under budget - you earn points!
+            finalScore = budgetSavings;
+        } else {
+            // Over budget - no points earned (but not penalized)
+            finalScore = 0;
+        }
     }
 
-    // Only award/deduct points if purchase is valid
+    // Only award points and update stats if purchase is valid
     if (isValid) {
         gameState.score += finalScore;
-        gameState.totalSaved += savings;
+        gameState.totalSaved += savings; // Track savings vs base price for stats
         gameState.ticketsPurchased += gameState.cart.length;
+
+        // Mark current shopping item as completed
+        currentItem.completed = true;
 
         // Add to purchase history for end game review
         gameState.purchaseHistory.push({
@@ -142,6 +218,13 @@ export function completeCheckout() {
                 price: item.price,
                 basePrice: item.basePrice
             })),
+            shoppingItem: {
+                name: currentItem.name,
+                quantity: currentItem.quantity,
+                budget: currentItem.budget,
+                totalPaid: totalPaid,
+                budgetSavings: currentItem.budget - totalPaid
+            },
             timestamp: Date.now()
         });
     }
@@ -183,26 +266,42 @@ export function completeCheckout() {
         });
     }
 
-    // Generate new target for next purchase
-    gameState.targetTicketCount = generateTargetTicketCount();
+    // Move to next shopping list item
+    gameState.currentShoppingIndex++;
 
+    // Check if shopping list is complete - end game if so
+    if (gameState.currentShoppingIndex >= gameState.shoppingList.length) {
+        // Shopping list complete! End the game
+        if (window.endGame) {
+            window.endGame();
+        }
+        return;
+    }
+
+    // Continue to next item
     renderSeats();
     if (window.updateCart) window.updateCart();
     if (window.updateDisplay) window.updateDisplay();
 }
 
 /**
- * Skip current target with penalty
- * Clears cart and generates new target
+ * Skip current shopping list item with penalty
+ * Clears cart and moves to next item
  */
 export function skipTarget() {
     if (!gameState.isRunning) return;
+
+    const currentItem = getCurrentShoppingItem();
+    if (!currentItem) return;
 
     // Apply penalty
     gameState.score -= SKIP_PENALTY;
 
     // Increment skip counter
     gameState.skipsCount++;
+
+    // Mark current item as completed (but skipped)
+    currentItem.completed = true;
 
     // Clear any items in cart
     gameState.cart.forEach(item => {
@@ -221,8 +320,17 @@ export function skipTarget() {
         });
     }
 
-    // Generate new target
-    gameState.targetTicketCount = generateTargetTicketCount();
+    // Move to next shopping list item
+    gameState.currentShoppingIndex++;
+
+    // Check if shopping list is complete - end game if so
+    if (gameState.currentShoppingIndex >= gameState.shoppingList.length) {
+        // Shopping list complete! End the game
+        if (window.endGame) {
+            window.endGame();
+        }
+        return;
+    }
 
     // Update display
     renderSeats();
